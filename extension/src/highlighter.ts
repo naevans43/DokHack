@@ -18,6 +18,16 @@ const SKIP_TAGS = new Set([
 // dokhack-yt-ts is our own transcript panel's timestamp badge (youtube.ts) --
 // same reasoning, own class since it's our markup, not YouTube's.
 const SKIP_CLASSES = new Set(['segment-timestamp', 'dokhack-yt-ts']);
+// YouTube keeps every engagement panel (its own transcript -- 600+ segments
+// for a talk -- comments, chapters...) in the DOM while it's closed. Tokenizing
+// a closed one is pure waste and, worse, floods the queue right when the
+// subtitle bar needs it; a panel is picked up when its visibility attribute
+// flips to expanded (observed below), e.g. for Alt+click on YouTube's own panel.
+const PANEL_TAG = 'YTD-ENGAGEMENT-PANEL-SECTION-LIST-RENDERER';
+const PANEL_HIDDEN = 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN';
+// Our YouTube subtitle bar (youtube.ts) changes every few seconds and is what
+// the reader is looking at: its text is tokenized ahead of everything else.
+const URGENT_CLASS = 'dokhack-yt-bar';
 const HAS_LATIN = /[a-z]/i;
 const SENTENCES = new Intl.Segmenter('en', { granularity: 'sentence' });
 
@@ -66,6 +76,8 @@ export class Highlighter {
   private freqOf = new WeakMap<Range, 'common' | 'rare'>();
   private freqBadges = true;
   private queue = new Set<Unit>();
+  private urgent = new Set<Unit>(); // see URGENT_CLASS
+  private unitText = new WeakMap<object, string>(); // the flat text a unit was last registered with
   private pumping = false;
   private generation = 0; // bumps on stop() so in-flight batches are dropped
   private observer?: MutationObserver;
@@ -87,12 +99,15 @@ export class Highlighter {
     CSS.highlights.set('mine-rare', this.hl.rare);
     this.enqueueSubtree(document.body);
     this.observer = new MutationObserver((muts) => this.onMutations(muts));
-    this.observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    this.observer.observe(document.body, {
+      childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['visibility'],
+    });
   }
 
   stop(): void {
     this.observer?.disconnect();
     this.queue.clear();
+    this.urgent.clear();
     this.generation++;
     this.pumping = false;
     CSS.highlights.delete('mine-unknown');
@@ -249,6 +264,7 @@ export class Highlighter {
     const ignore = this.ignoreRoot();
     for (let el = node.parentElement; el; el = el.parentElement) {
       if (SKIP_TAGS.has(el.tagName) || el.isContentEditable || el === ignore) return true;
+      if (el.tagName === PANEL_TAG && el.getAttribute('visibility') === PANEL_HIDDEN) return true;
       for (const cls of SKIP_CLASSES) if (el.classList.contains(cls)) return true;
     }
     return false;
@@ -299,7 +315,9 @@ export class Highlighter {
   }
 
   private enqueue(unit: Unit): void {
-    this.queue.add(unit);
+    const el = unit.nodeType === Node.TEXT_NODE ? unit.parentElement : (unit as Element);
+    if (el?.closest(`.${URGENT_CLASS}`)) this.urgent.add(unit);
+    else this.queue.add(unit);
     if (!this.pumping) {
       this.pumping = true;
       this.pump();
@@ -310,38 +328,55 @@ export class Highlighter {
   // then register ranges when idle so the page never stutters.
   private async pump(): Promise<void> {
     const gen = this.generation;
-    while (this.queue.size && gen === this.generation) {
-      const batch: { unit: Unit; text: string; nodes: Text[] }[] = [];
-      let chars = 0;
-      for (const unit of this.queue) {
-        this.queue.delete(unit);
-        if (!unit.isConnected) continue;
-        const nodes = this.textNodesOf(unit);
-        const text = nodes.map((n) => n.data).join('');
-        if (text.length < 2 || !HAS_LATIN.test(text)) continue;
-        batch.push({ unit, text, nodes });
-        chars += text.length;
-        if (batch.length >= 200 || chars >= 30_000) break;
-      }
-      if (!batch.length) continue;
-
-      let results: Token[][];
-      try {
-        results = await ask<Token[][]>({ type: 'tokenize', texts: batch.map((b) => b.text) });
-      } catch (err) {
-        console.warn('[dokhack] tokenize failed', err);
-        break; // e.g. extension reloaded; stop quietly
-      }
-      await idle();
-      if (gen !== this.generation) return;
-      batch.forEach(({ unit, text, nodes }, i) => {
-        // Content may have changed while we waited; if so it's already re-queued.
-        if (unit.isConnected && nodes.map((n) => n.data).join('') === text) {
-          this.register(unit, nodes, results[i]);
+    try {
+      while ((this.urgent.size || this.queue.size) && gen === this.generation) {
+        const batch: { unit: Unit; text: string; nodes: Text[] }[] = [];
+        let chars = 0;
+        let hasUrgent = false;
+        fill: for (const set of [this.urgent, this.queue]) {
+          for (const unit of set) {
+            set.delete(unit);
+            if (!unit.isConnected) continue;
+            const nodes = this.textNodesOf(unit);
+            const text = nodes.map((n) => n.data).join('');
+            if (text.length < 2 || !HAS_LATIN.test(text)) continue;
+            // A parent's mutation re-walks its whole subtree; a block whose
+            // text hasn't changed since it was tokenized doesn't need it again.
+            if (this.unitText.get(unit) === text && this.entries.has(unit)) continue;
+            batch.push({ unit, text, nodes });
+            if (set === this.urgent) hasUrgent = true;
+            chars += text.length;
+            if (batch.length >= 200 || chars >= 30_000) break fill;
+          }
         }
-      });
+        if (!batch.length) continue;
+
+        let results: Token[][];
+        try {
+          results = await ask<Token[][]>({ type: 'tokenize', texts: batch.map((b) => b.text) });
+        } catch (err) {
+          console.warn('[dokhack] tokenize failed', err);
+          break; // e.g. extension reloaded; stop quietly
+        }
+        if (!hasUrgent) await idle(); // the subtitle bar can't wait for an idle moment
+        if (gen !== this.generation) return;
+        batch.forEach(({ unit, text, nodes }, i) => {
+          // Content may have changed while we waited; if so it's already re-queued.
+          if (!unit.isConnected || nodes.map((n) => n.data).join('') !== text) return;
+          try {
+            this.register(unit, nodes, results[i] ?? []);
+            this.unitText.set(unit, text);
+          } catch (err) {
+            // One odd block must never stall highlighting for the rest of the page.
+            console.warn('[dokhack] could not highlight a block', err);
+          }
+        });
+      }
+    } finally {
+      // Always release the pump -- an exception used to leave `pumping` stuck
+      // true, silently ending all highlighting on the page.
+      if (gen === this.generation) this.pumping = false;
     }
-    if (gen === this.generation) this.pumping = false;
   }
 
   private register(unit: Unit, nodes: Text[], toks: Token[]): void {
@@ -397,6 +432,7 @@ export class Highlighter {
     this.entries.delete(unit);
     this.unitNodes.delete(unit);
     this.unitTokens.delete(unit);
+    this.unitText.delete(unit);
   }
 
   /** A node/subtree that just left the DOM -- forget whichever units its text nodes belonged to. */
@@ -413,6 +449,13 @@ export class Highlighter {
     const ignore = this.ignoreRoot();
     for (const m of muts) {
       if (ignore && ignore.contains(m.target)) continue;
+      if (m.type === 'attributes') {
+        // A YouTube engagement panel opened or closed (see PANEL_TAG).
+        if ((m.target as Element).tagName !== PANEL_TAG) continue;
+        if ((m.target as Element).getAttribute('visibility') === PANEL_HIDDEN) this.forgetRemovedSubtree(m.target);
+        else this.enqueueSubtree(m.target);
+        continue;
+      }
       if (m.type === 'characterData') {
         this.enqueueSubtree(m.target as Text);
         continue;
