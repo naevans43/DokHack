@@ -11,7 +11,9 @@
 // our own timestamp badge's class to SKIP_CLASSES, the same mechanism
 // already used for YouTube's native ".segment-timestamp".
 
+import { comprehensionOf, TARGET_PCT } from './comprehension';
 import { ask } from './messaging';
+import type { PageStats } from './types';
 
 interface TranscriptLine {
   text: string;
@@ -303,8 +305,32 @@ export function captureAudioClip(
 let lastPath = '';
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-export function initYouTubeExtras(): void {
+// ---- comprehension meter (per video) -----------------------------------------
+// The panel header shows what share of this video's transcript words the
+// reader knows (comprehension.ts; 95% is the target band). Counted by
+// content.ts's Highlighter over our own transcript list only -- the rest of a
+// YouTube page (titles, comments) would swamp it otherwise.
+let statsFor: ((root: Node) => PageStats) | null = null;
+let meterEl: HTMLElement | null = null;
+
+/** This video's transcript word counts, or undefined before a transcript is built. */
+export function videoStats(): PageStats | undefined {
+  return listEl && statsFor ? statsFor(listEl) : undefined;
+}
+
+function updateMeter(): void {
+  if (!meterEl) return;
+  const c = comprehensionOf(videoStats());
+  meterEl.hidden = !c;
+  if (!c) return;
+  meterEl.textContent = `이해도 ${c.pct}%`;
+  meterEl.dataset.band = c.band;
+  meterEl.title = `이 영상 자막 단어의 ${c.pct}%를 알아요. ${c.label} (목표 ${TARGET_PCT}% 이상)`;
+}
+
+export function initYouTubeExtras(stats: (root: Node) => PageStats): void {
   if (location.hostname !== 'www.youtube.com') return;
+  statsFor = stats;
   // YouTube is a single-page app -- switching videos never reloads the
   // page, so 'yt-navigate-finish' is the intended way to notice a new video
   // loaded. Confirmed live, though, that it doesn't always fire -- reliably
@@ -319,7 +345,7 @@ export function initYouTubeExtras(): void {
   // running alongside it rather than replacing it (the event, when it does
   // fire, reacts immediately; the poll is only a backstop).
   document.addEventListener('yt-navigate-finish', checkNavigation);
-  pollTimer = setInterval(checkNavigation, 1000);
+  pollTimer = setInterval(() => { checkNavigation(); updateMeter(); }, 1000);
   checkNavigation();
 }
 
@@ -359,6 +385,7 @@ function teardown(): void {
   if (pauseRaf) { cancelAnimationFrame(pauseRaf); pauseRaf = 0; }
   pausedBoundary = -1;
   pauseChip = null;
+  meterEl = null;
   video = null;
   panelEl?.remove();
   barEl?.remove();
@@ -604,8 +631,9 @@ function buildPanel(): void {
     setAutoPauseLines(next);
     ask({ type: 'saveSettings', patch: { autoPauseLines: next } }).catch(() => {});
   });
+  meterEl = el('span', { class: 'dokhack-yt-meter', hidden: '' });
   header.append(el('span', { class: 'dokhack-yt-header-actions' }, ''));
-  (header.lastChild as HTMLElement).append(pauseChip, toggleBtn);
+  (header.lastChild as HTMLElement).append(meterEl, pauseChip, toggleBtn);
   panelEl.append(header);
 
   listEl = el('div', { class: 'dokhack-yt-panel-list' });

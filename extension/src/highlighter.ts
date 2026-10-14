@@ -1,6 +1,6 @@
 import { ask } from './messaging';
 import { statusOf, type WordMap } from './storage';
-import type { Token, WordStatus } from './types';
+import type { PageStats, Token, WordStatus } from './types';
 
 // Uses the CSS Custom Highlight API instead of wrapping words in <span>s:
 // the page DOM is never modified, so layouts and site scripts don't break,
@@ -116,11 +116,18 @@ export class Highlighter {
    * How many word occurrences on the scanned page fall in each status, for the
    * popup's "you know N% of this page" line. Counts occurrences (running
    * words), not distinct lemmas -- that's what reading actually feels like.
+   * With `within`, only words inside that element count (youtube.ts's
+   * transcript list, for a per-video number).
    */
-  stats(): { total: number; known: number; seen: number; learning: number; unknown: number; ignored: number } {
-    const s = { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 };
+  stats(within?: Node): PageStats {
+    const s: PageStats = { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 };
     for (const [lemma, ranges] of this.byLemma) {
-      const n = ranges.size;
+      let n = ranges.size;
+      if (within) {
+        n = 0;
+        for (const r of ranges) if (within.contains(r.startContainer)) n++;
+      }
+      if (!n) continue;
       s.total += n;
       s[statusOf(this.words, lemma)] += n;
     }

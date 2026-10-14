@@ -1,3 +1,4 @@
+import { comprehensionOf, TARGET_PCT } from '../../extension/src/comprehension';
 import { lookupKorean } from '../../extension/src/krdict';
 import { tokenize } from '../../extension/src/nlp';
 import { lookupEnglish } from '../../extension/src/wordnet';
@@ -64,23 +65,25 @@ function renderDoc(): void {
   updateCoverage();
 }
 
-/** "You know N% of this text" -- occurrences, ignored words left out of both sides. */
+/** Comprehension meter ("you know N% of this text", 95% target band) -- the extension's comprehension.ts. */
 function updateCoverage(): void {
-  let total = 0, known = 0, unknown = 0;
+  const stats = { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 };
   for (const p of paragraphs) {
     for (const t of p.tokens) {
-      const s = statusOf(t.lemma);
-      if (s === 'ignored') continue;
-      total++;
-      if (s === 'known') known++; else unknown++;
+      stats.total++;
+      stats[statusOf(t.lemma)]++;
     }
   }
+  const c = comprehensionOf(stats);
   const box = $('coverage');
-  box.hidden = total === 0;
-  if (!total) return;
-  const pct = Math.round((known / total) * 100);
-  ($('coverageBar').firstElementChild as HTMLElement).style.width = `${pct}%`;
-  $('coverageText').textContent = `이 글의 단어 ${pct}%를 알아요 · 모르는 단어 ${unknown}개 (전체 ${total}개)`;
+  box.hidden = !c;
+  if (!c) return;
+  ($('coverageBar').firstElementChild as HTMLElement).style.width = `${c.pct}%`;
+  const band = $('coverageBand');
+  band.textContent = c.label;
+  band.dataset.band = c.band;
+  const toTarget = c.pct < TARGET_PCT ? `목표 ${TARGET_PCT}%까지 ${TARGET_PCT - c.pct}%p 남았어요.` : `목표 구간(${TARGET_PCT}% 이상)이에요.`;
+  $('coverageText').textContent = `이 글 단어의 ${c.pct}%를 알아요. 모르는 단어 ${c.unknownCount}개, 전체 ${c.counted}개. ${toTarget}`;
 }
 
 function repaint(lemma: string): void {

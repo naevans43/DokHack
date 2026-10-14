@@ -40,6 +40,16 @@ dokhack-popup { all: initial; }
   padding: 1px 10px; font-size: 12px; cursor: pointer;
 }
 .dokhack-yt-chip-on { background: #1D2230; color: #fff; border-color: #1D2230; }
+/* Comprehension meter (comprehension.ts): green-ish only inside the 95% target band. */
+.dokhack-yt-meter {
+  border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 700;
+  background: #CFE1FF; color: #1D2230; cursor: default;
+}
+.dokhack-yt-meter[hidden] { display: none; }
+.dokhack-yt-meter[data-band="hard"] { background: #F1B9C0; }
+.dokhack-yt-meter[data-band="stretch"] { background: #FFE872; }
+.dokhack-yt-meter[data-band="target"] { background: #CDEBD3; }
+.dokhack-yt-meter[data-band="easy"] { background: #D5E3F3; }
 .dokhack-yt-panel-list { max-height: 360px; overflow-y: auto; }
 .dokhack-yt-panel-collapsed .dokhack-yt-panel-list,
 .dokhack-yt-panel-collapsed .dokhack-yt-jump-current { display: none; }

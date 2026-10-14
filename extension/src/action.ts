@@ -1,3 +1,4 @@
+import { comprehensionOf, TARGET_PCT } from './comprehension';
 import { REVIEW_SITE_URL } from './config';
 import { ask } from './messaging';
 import { getCards, getSettings, getWords, saveSettings } from './storage';
@@ -25,6 +26,9 @@ async function main(): Promise<void> {
   const coverage = document.getElementById('coverage')!;
   const coverageBar = document.getElementById('coverageBar')!;
   const coverageText = document.getElementById('coverageText')!;
+  const coverageSource = document.getElementById('coverageSource')!;
+  const coveragePct = document.getElementById('coveragePct')!;
+  const coverageBand = document.getElementById('coverageBand')!;
   const hostEl = document.getElementById('host')!;
   const toggle = document.getElementById('toggle') as HTMLInputElement;
   const [settings, words, cards] = await Promise.all([getSettings(), getWords(), getCards()]);
@@ -33,14 +37,25 @@ async function main(): Promise<void> {
   autoBox.addEventListener('change', () => saveSettings({ autoScan: autoBox.checked }));
 
   let pollTimer: ReturnType<typeof setInterval> | 0 = 0;
-  /** "You know N% of this page" -- ignored words (names etc.) are left out of both sides. */
-  function showCoverage(s: TabStatus['stats']): void {
-    const counted = s ? s.total - s.ignored : 0;
-    coverage.hidden = !s || counted === 0;
-    if (!s || counted === 0) return;
-    const pct = Math.round((s.known / counted) * 100);
-    coverageBar.style.width = `${pct}%`;
-    coverageText.textContent = `이 페이지 단어의 ${pct}%를 알아요 · 모르는 단어 ${s.unknown + s.seen + s.learning}개 (전체 ${counted}개)`;
+  /**
+   * Comprehension meter (comprehension.ts): "you know N% of this page" against
+   * the 95% target band. On YouTube, once the transcript is built, the video's
+   * own subtitles are measured instead of the whole page.
+   */
+  function showCoverage(status: TabStatus | null): void {
+    const video = comprehensionOf(status?.active ? status.videoStats : undefined);
+    const c = video ?? comprehensionOf(status?.active ? status.stats : undefined);
+    coverage.hidden = !c;
+    if (!c) return;
+    coverageSource.textContent = video ? '이 영상 이해도' : '이 페이지 이해도';
+    coveragePct.textContent = `${c.pct}%`;
+    coverageBand.textContent = c.label;
+    coverageBand.dataset.band = c.band;
+    coverageBar.style.width = `${c.pct}%`;
+    const toTarget = c.pct < TARGET_PCT
+      ? `목표 ${TARGET_PCT}%까지 ${TARGET_PCT - c.pct}%p 남았어요.`
+      : `목표 구간(${TARGET_PCT}% 이상)이에요.`;
+    coverageText.textContent = `모르는 단어 ${c.unknownCount}개, 전체 ${c.counted}개. ${toTarget}`;
   }
 
   // Reflects what the page's content script says it's doing right now.
@@ -48,7 +63,7 @@ async function main(): Promise<void> {
   async function refresh(command: TabCommand['dokhack'] = 'status'): Promise<void> {
     const status = host && tabId !== undefined ? await tabStatus(tabId, command) : null;
     scanBtn.classList.toggle('primary', !status?.active);
-    showCoverage(status?.active ? status.stats : undefined);
+    showCoverage(status);
     if (status?.active && !pollTimer) pollTimer = setInterval(() => refresh(), 1000); // the page's words keep arriving for a moment after a scan
     if (!status?.active && pollTimer) { clearInterval(pollTimer); pollTimer = 0; }
     if (!host) {

@@ -20,8 +20,18 @@
     .scan .hint { font-size: 12px; margin: 6px 0 8px; }
     .coverage { margin: 0 0 10px; }
     .coverage[hidden] { display: none; }
-    .coverage .bar { height: 6px; border-radius: 3px; background: var(--unknown); overflow: hidden; }
+    .coverage .head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .coverage .pct { font-size: 20px; font-weight: 700; line-height: 1.2; }
+    .coverage .head > span { white-space: nowrap; }
+    .coverage .band { white-space: nowrap; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 0 8px; background: var(--unknown); }
+    .coverage .band[data-band="hard"] { background: var(--margin); }
+    .coverage .band[data-band="stretch"] { background: var(--learning); }
+    .coverage .band[data-band="target"] { background: #CDEBD3; }
+    .coverage .band[data-band="easy"] { background: var(--rule); }
+    .coverage .bar { position: relative; height: 8px; border-radius: 4px; background: var(--unknown); overflow: hidden; }
     .coverage .bar span { display: block; height: 100%; width: 0; background: var(--ink); transition: width 0.3s; }
+    /* The 95% target band: everything right of the tick. */
+    .coverage .bar i { position: absolute; top: 0; bottom: 0; left: 95%; right: 0; border-left: 2px solid var(--redpen); background: rgba(205, 235, 211, 0.55); }
     .coverage p { margin: 4px 0 0; font-size: 12.5px; }
     .auto { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
     .auto input { accent-color: var(--ink); margin: 0; }
@@ -33,7 +43,8 @@
     <button class="btn primary" id="scan" disabled>이 페이지 스캔하기</button>
     <p class="muted hint" id="scanHint">&nbsp;</p>
     <div class="coverage" id="coverage" hidden>
-      <div class="bar" aria-hidden="true"><span id="coverageBar"></span></div>
+      <div class="head"><span><span class="muted" id="coverageSource">이해도</span> <span class="pct" id="coveragePct"></span></span><span class="band" id="coverageBand"></span></div>
+      <div class="bar" aria-hidden="true"><span id="coverageBar"></span><i></i></div>
       <p id="coverageText"></p>
     </div>
     <label class="auto"><input type="checkbox" id="auto" /> 페이지를 열 때마다 자동으로 스캔</label>

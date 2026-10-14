@@ -83,8 +83,13 @@ export interface TabStatus {
   /** The reader hasn't switched the extension off for this site. */
   allowed: boolean;
   /** Word-occurrence counts by status on the scanned page (only while active). */
-  stats?: { total: number; known: number; seen: number; learning: number; unknown: number; ignored: number };
+  stats?: PageStats;
+  /** YouTube only: the same counts restricted to the current video's transcript (once it's built). */
+  videoStats?: PageStats;
 }
+
+/** Running-word counts by status (see Highlighter.stats and comprehension.ts). */
+export interface PageStats { total: number; known: number; seen: number; learning: number; unknown: number; ignored: number }
 
 // A signed-in link to the review website (see /web). Absent = not linked;
 // mining/highlighting work exactly the same either way.

@@ -8,7 +8,7 @@ import { DEFAULT_SETTINGS, getSettings, getWords, statusOf, type WordMap } from 
 import type { KoreanCandidate, LookupResult, Settings, TabCommand, TabStatus, Token, WordStatus } from './types';
 import {
   captureAudioClip, captureFrame, disableYouTubeExtras, initYouTubeExtras,
-  pauseIfBarWord, setAutoPauseLines, timeRangeForLines, transcriptContextFor,
+  pauseIfBarWord, setAutoPauseLines, timeRangeForLines, transcriptContextFor, videoStats,
 } from './youtube';
 
 let words: WordMap = {};
@@ -52,7 +52,10 @@ async function main(): Promise<void> {
     if (msg.dokhack === 'scan') scanRequested = true;
     else if (msg.dokhack === 'unscan') scanRequested = false;
     reconcile();
-    sendResponse({ active: !!highlighter, allowed: hostAllowed(), stats: highlighter?.stats() } satisfies TabStatus);
+    sendResponse({
+      active: !!highlighter, allowed: hostAllowed(),
+      stats: highlighter?.stats(), videoStats: highlighter ? videoStats() : undefined,
+    } satisfies TabStatus);
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -93,7 +96,7 @@ function enable(): void {
   document.addEventListener('pointerdown', onPointerDown, true);
   document.addEventListener('mousemove', onMouseMove, true);
   document.addEventListener('mouseleave', onMouseLeave);
-  initYouTubeExtras();
+  initYouTubeExtras((root) => highlighter?.stats(root) ?? { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 });
 }
 
 function disable(): void {
