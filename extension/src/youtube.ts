@@ -354,6 +354,7 @@ export function disableYouTubeExtras(): void {
   document.removeEventListener('yt-navigate-finish', checkNavigation);
   if (pollTimer !== null) clearInterval(pollTimer);
   pollTimer = null;
+  lastPath = ''; // so scanning again on the same video rebuilds the panel (it used to see "same page" and do nothing)
   generation++;
   teardown();
 }
@@ -506,83 +507,109 @@ function closeAnyOpenTranscriptPanels(): void {
 }
 
 // Confirmed live on real videos: YouTube can render *two* engagement panels
-// holding the same segment list -- one
-// visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED", the other "..._HIDDEN"
-// -- seen both as two panels sharing target-id
-// "engagement-panel-searchable-transcript" (654 raw segments for 327 real
-// lines) and, on the newer view-model UI, as target-id flipping between
-// "PAmodern_transcript_view" and "null" across the two copies. Only a panel
-// that's actually EXPANDED is trusted -- see harvestTranscript()'s comment
-// on why *any* segments in the DOM, expanded or not, turned out unsafe.
-function findExpandedTranscriptPanel(): Element | null {
-  const panels = document.querySelectorAll(
-    'ytd-engagement-panel-section-list-renderer[visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED"]',
-  );
-  for (const p of panels) {
-    if (p.querySelector(SEGMENT_SELECTOR)) return p;
+// holding the same segment list (one EXPANDED, one HIDDEN; target-id can't be
+// trusted to say which -- "engagement-panel-searchable-transcript" twice on
+// the older UI, "PAmodern_transcript_view" vs "null" on the newer one).
+// harvestTranscript() reads an expanded panel first and otherwise only
+// segments that appeared since it started, so either copy is fine.
+
+// How long to keep trying for a transcript. The old fixed 20 s started before
+// the trigger even existed (seen live: the Transcript tab appeared ~12 s into a
+// load) and YouTube fills the panel only when it renders -- in a tab that isn't
+// being painted it stayed empty until the tab was shown, then filled at once.
+// So the sidebar appeared or not depending on timing. Now: wait up to 90 s, and
+// accept segments that arrive late into a panel we've already closed (they
+// still land in the DOM), not just ones in an open panel.
+const HARVEST_TIMEOUT_MS = 90_000;
+// A click on a trigger that YouTube was about to replace (the previous
+// video's description during an in-page navigation) opens nothing, and the
+// old code only ever clicked once -- so re-click while no transcript panel is open.
+const RECLICK_MS = 4000;
+const PANEL_SELECTOR = 'ytd-engagement-panel-section-list-renderer';
+const EXPANDED = 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED';
+
+// Signatures of the transcripts recently shown, by page. With autoScan on, a
+// harvest starts the moment an in-page navigation finishes, while YouTube can
+// still be showing (and re-opening) the *previous* video's transcript -- the
+// "transcript from the previous video" bug. Lines matching what another video
+// showed are never accepted for this one.
+const recentHarvests: { path: string; sig: string }[] = [];
+
+function linesSig(lines: TranscriptLine[]): string {
+  return `${lines.length}:${lines.slice(0, 5).map((l) => `${l.startMs}=${l.text}`).join('|')}`;
+}
+
+function isStale(lines: TranscriptLine[], path: string): boolean {
+  const sig = linesSig(lines);
+  if (recentHarvests.some((h) => h.path !== path && h.sig === sig)) return true;
+  // A transcript running well past this video's end belongs to another video.
+  const durationMs = video && isFinite(video.duration) ? video.duration * 1000 : (() => {
+    const v = document.querySelector('video');
+    return v && isFinite(v.duration) ? v.duration * 1000 : NaN;
+  })();
+  return isFinite(durationMs) && lines[lines.length - 1].startMs > durationMs + 5000;
+}
+
+function readLines(segs: Element[]): TranscriptLine[] {
+  const out: TranscriptLine[] = [];
+  for (const seg of segs) {
+    const data = extractSegment(seg);
+    if (data) out.push({ text: data.text, startMs: parseTimestamp(data.ts) });
   }
-  return null;
+  return out;
+}
+
+function anyTranscriptPanelOpen(): boolean {
+  return [...document.querySelectorAll(`${PANEL_SELECTOR}[visibility="${EXPANDED}"]`)]
+    .some((p) => /transcript/i.test(p.getAttribute('target-id') ?? '') || p.querySelector(SEGMENT_SELECTOR));
 }
 
 async function harvestTranscript(gen: number): Promise<TranscriptLine[] | null> {
   // Never trust whatever panel state exists at the start of a harvest --
-  // confirmed live that requiring EXPANDED (see findExpandedTranscriptPanel)
-  // still wasn't enough: on an in-page SPA navigation to a second video,
-  // YouTube can carry the *same* transcript panel component over already
-  // EXPANDED, still showing the FIRST video's real, genuine segments --
-  // not hidden leftovers this time, but a live, visible, expanded panel
-  // that simply hasn't been repopulated for the new video yet (especially
-  // if the new video's captions take a moment to attach, or the panel
-  // reuses cached data until something tells it not to). The original
-  // "if already EXPANDED with segments, use it" fast path had no way to
-  // tell that apart from a genuine same-video re-check, so it would read
-  // and show the *previous* video's transcript under the new video's page
-  // with no error. Force-closing unconditionally first, before ever
-  // looking for an existing panel, guarantees the click below is always a
-  // real fresh open for *this* navigation rather than a no-op read of
-  // whatever was already sitting open.
+  // confirmed live that YouTube can carry an EXPANDED transcript panel over to
+  // the next video, still showing the previous one's segments. Force-close
+  // first so the click below is a fresh open for this navigation, and remember
+  // which segment nodes already existed: those belong to an earlier video
+  // unless they're in a panel that's open again.
   closeAnyOpenTranscriptPanels();
+  const before = new Set(document.querySelectorAll(SEGMENT_SELECTOR));
+  const path = location.pathname + location.search;
+  const counts = new WeakMap<Element, number>(); // segment count per panel at the last poll
 
-  let panel: Element | null = null;
-  {
-    // Both trigger controls and the segments they reveal can take several
-    // seconds to exist -- confirmed live: on a real video, the description's
-    // "Show transcript" button didn't exist in the DOM until ~9s after
-    // navigation (YouTube's description/transcript UI renders well after
-    // document_idle, when this content script runs). One combined deadline
-    // covers waiting for a trigger, clicking it once it appears, and then
-    // waiting for the panel it opens.
-    const deadline = Date.now() + 20000;
-    let clicked = false;
-    while (Date.now() < deadline) {
-      if (gen !== generation) return null;
-      if (!clicked) {
-        const chip = document.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Transcript"]');
-        const showBtn = document.querySelector<HTMLButtonElement>('button[aria-label="Show transcript"]');
-        if (chip || showBtn) { chip?.click(); showBtn?.click(); clicked = true; }
-      }
-      panel = findExpandedTranscriptPanel();
-      if (panel) break;
-      await sleep(300);
+  const deadline = Date.now() + HARVEST_TIMEOUT_MS;
+  let lastClick = 0;
+  while (Date.now() < deadline) {
+    if (gen !== generation) return null;
+    if (!anyTranscriptPanelOpen() && Date.now() - lastClick > RECLICK_MS) {
+      // Both trigger controls can take several seconds to exist (the
+      // description renders well after document_idle); see the header notes.
+      const chip = document.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Transcript"]');
+      const showBtn = document.querySelector<HTMLButtonElement>('button[aria-label="Show transcript"]');
+      if (chip || showBtn) { chip?.click(); showBtn?.click(); lastClick = Date.now(); }
     }
-  }
-  if (!panel) {
-    // We may have opened a panel above even though it never populated --
-    // don't leave it stuck open with nothing of ours to show for it.
-    closeAnyOpenTranscriptPanels();
-    return null;
-  }
 
-  const out: TranscriptLine[] = [];
-  panel.querySelectorAll(SEGMENT_SELECTOR).forEach((seg) => {
-    const data = extractSegment(seg);
-    if (data) out.push({ text: data.text, startMs: parseTimestamp(data.ts) });
-  });
-
-  // We render our own copy below, so close YouTube's.
+    // An open panel first, then any panel whose segments are new since this harvest began.
+    const panels = [...document.querySelectorAll(PANEL_SELECTOR)]
+      .sort((a, b) => Number(b.getAttribute('visibility') === EXPANDED) - Number(a.getAttribute('visibility') === EXPANDED));
+    for (const panel of panels) {
+      const segs = [...panel.querySelectorAll(SEGMENT_SELECTOR)];
+      const settled = segs.length > 0 && counts.get(panel) === segs.length; // stopped growing since the last poll
+      counts.set(panel, segs.length);
+      if (!settled) continue;
+      if (panel.getAttribute('visibility') !== EXPANDED && segs.every((s) => before.has(s))) continue;
+      const lines = readLines(segs);
+      if (!lines.length || isStale(lines, path)) continue;
+      closeAnyOpenTranscriptPanels(); // we render our own copy
+      recentHarvests.unshift({ path, sig: linesSig(lines) });
+      recentHarvests.length = Math.min(recentHarvests.length, 8);
+      return lines;
+    }
+    await sleep(300);
+  }
+  // We may have opened a panel above even though it never populated --
+  // don't leave it stuck open with nothing of ours to show for it.
   closeAnyOpenTranscriptPanels();
-
-  return out.length ? out : null;
+  return null;
 }
 
 // ---- transcript panel -----------------------------------------------------
