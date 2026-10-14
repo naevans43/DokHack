@@ -386,9 +386,31 @@ function updatePrewatch(): void {
   prewatchEl.hidden = false;
 }
 
+// ---- "good to rewatch" ------------------------------------------------------
+// A video counts as watched after REWATCH_MIN_S seconds of actual playback (or
+// half of it, for a short one). If its comprehension is in the 95% band at
+// that point, the background remembers it (device-only list on the library
+// page); the score is re-sent whenever it changes, e.g. as words get marked.
+const REWATCH_MIN_S = 60;
+let watchedS = 0;
+let reportedPct = -1;
+
+function noteWatching(pct: number | null): void {
+  if (!video || video.paused || video.ended) return;
+  watchedS++;
+  const needed = isFinite(video.duration) ? Math.min(REWATCH_MIN_S, video.duration / 2) : REWATCH_MIN_S;
+  if (watchedS < needed || pct === null || pct < TARGET_PCT || pct === reportedPct) return;
+  const id = new URLSearchParams(location.search).get('v');
+  if (!id) return;
+  reportedPct = pct;
+  const title = document.title.replace(/^\(\d+\)\s*/, '').replace(/\s*-\s*YouTube$/, '');
+  ask({ type: 'rememberVideo', url: `https://www.youtube.com/watch?v=${id}`, title, pct }).catch(() => {});
+}
+
 function updateMeter(): void {
   if (!meterEl) return;
   const c = comprehensionOf(videoStats());
+  noteWatching(c?.pct ?? null);
   meterEl.hidden = !c;
   if (!c) return;
   meterEl.textContent = `이해도 ${c.pct}%`;
@@ -457,6 +479,8 @@ function teardown(): void {
   meterEl = null;
   prewatchEl = null;
   prewatchShown = false;
+  watchedS = 0;
+  reportedPct = -1;
   lastTotal = -1;
   stableTicks = 0;
   video = null;

@@ -54,6 +54,11 @@ a.btn { text-decoration: none; display: inline-block; }
 .form-error { color: var(--redpen); font-size: 13px; margin: 8px 0 0; }
 .form-error[hidden] { display: none; }
 .empty { margin: 24px 0; max-width: 48ch; }
+.rewatch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rewatch-list li { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--rule); padding: 6px 0; }
+.rewatch-list a { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.rewatch-list .pct { font-weight: 700; background: #CDEBD3; border-radius: 999px; padding: 0 8px; font-size: 12px; }
+.rewatch-list .date { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .test, .account { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--ink); display: grid; gap: 12px; max-width: 520px; }
 .test h2, .account h2 { font-size: 18px; }
 .test p, .account p { margin: 0; }

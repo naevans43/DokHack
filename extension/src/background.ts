@@ -6,7 +6,7 @@ import { annotateFrequency } from './frequency';
 import { lookupFalseFriend } from './konglish';
 import { lookupKorean } from './krdict';
 import { tokenize } from './nlp';
-import { getAccount, getCards, getEncounters, getWords, type WordMap } from './storage';
+import { getAccount, getCards, getEncounters, getRewatch, getWords, type WordMap } from './storage';
 import type { AccountSession, EncounterMap, MinedCard, Request } from './types';
 import { lookupEnglish } from './wordnet';
 import { FREQUENCY_BANDS } from './wordlist';
@@ -238,6 +238,22 @@ async function recordEncounters(lemmas: string[], url: string): Promise<number> 
     }
     if (counted) await chrome.storage.local.set({ encounters });
     return counted;
+  });
+}
+
+// ---- "good to rewatch" ------------------------------------------------------
+// youtube.ts reports a video once it's been genuinely watched with >= 95% of
+// its subtitle words known. One entry per video (its bare watch URL), newest
+// first, the score kept up to date; device-only -- never part of any sync.
+const REWATCH_KEPT = 100;
+
+async function rememberVideo(url: string, title: string, pct: number): Promise<void> {
+  const m = /^https:\/\/www\.youtube\.com\/watch\?v=([\w-]{6,20})$/.exec(url);
+  if (!m || !(pct >= 0 && pct <= 100)) return;
+  await serial(async () => {
+    const list = (await getRewatch()).filter((v) => v.url !== url);
+    list.unshift({ url, title: String(title).slice(0, 200), pct: Math.round(pct), at: Date.now() });
+    await chrome.storage.local.set({ rewatch: list.slice(0, REWATCH_KEPT) });
   });
 }
 
@@ -677,6 +693,13 @@ async function handle(req: Request): Promise<unknown> {
     }
     case 'koreanGloss':
       return lookupKorean(req.lemma, req.sentence, req.pos);
+    case 'rememberVideo':
+      return rememberVideo(req.url, req.title, req.pct);
+    case 'forgetVideo':
+      return serial(async () => {
+        const list = req.url === null ? [] : (await getRewatch()).filter((v) => v.url !== req.url);
+        await chrome.storage.local.set({ rewatch: list });
+      });
     case 'encounter':
       return recordEncounters(req.lemmas.filter((l) => typeof l === 'string').slice(0, 500), String(req.url));
     case 'setStatus':

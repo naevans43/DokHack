@@ -156,7 +156,10 @@ export type Request =
   | { type: 'dueCount' }
   // "Seen it again": 학습 중 words that appear on the page being read (content.ts
   // reports each once per page); the background counts one encounter per page.
-  | { type: 'encounter'; lemmas: string[]; url: string };
+  | { type: 'encounter'; lemmas: string[]; url: string }
+  // "Good to rewatch": a YouTube video watched at >= 95% comprehension (youtube.ts).
+  | { type: 'rememberVideo'; url: string; title: string; pct: number }
+  | { type: 'forgetVideo'; url: string | null }; // null = clear the whole list
 
 /**
  * "Seen it again" counter, keyed by lemma: how many different pages/videos a
@@ -166,5 +169,12 @@ export type Request =
  * the counts are synced (vocab.encounters on the website).
  */
 export type EncounterMap = Record<string, { n: number; p: string[] }>;
+
+/**
+ * A YouTube video watched with at least 95% of its subtitle words known --
+ * worth rewatching. Device-only (chrome.storage.local, never synced): the
+ * first thing DokHack keeps about what was watched rather than mined.
+ */
+export interface RewatchVideo { url: string; title: string; pct: number; at: number }
 
 export type Response<T> = { ok: true; data: T } | { ok: false; error: string };

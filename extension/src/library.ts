@@ -4,7 +4,7 @@ import { REVIEW_SITE_URL } from './config';
 import { definitionClass } from './konglish';
 import { ask } from './messaging';
 import { stopSpeaking, ttsButtons } from './tts';
-import { getAccount, getCards, getEncounters, getSettings, saveSettings } from './storage';
+import { getAccount, getCards, getEncounters, getRewatch, getSettings, saveSettings } from './storage';
 import type { EncounterMap, MinedCard } from './types';
 
 // Saved-sentences page (also the extension's options page).
@@ -427,3 +427,26 @@ const showFlags = () => getSettings().then((s) => flags.forEach(({ key, box }) =
 flags.forEach(({ key, box }) => box.addEventListener('change', () => saveSettings({ [key]: box.checked })));
 showFlags();
 chrome.storage.onChanged.addListener((c) => { if (c.settings) showFlags(); });
+
+// "Good to rewatch" (youtube.ts reports, background.ts stores; device-only).
+async function renderRewatch(): Promise<void> {
+  const videos = await getRewatch();
+  const list = document.getElementById('rewatchList')!;
+  list.replaceChildren(...videos.map((v) => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = v.url;
+    a.target = '_blank';
+    a.rel = 'noreferrer';
+    a.textContent = v.title || v.url;
+    const forget = button('del', '삭제', () => { ask({ type: 'forgetVideo', url: v.url }).catch(() => {}); });
+    forget.setAttribute('aria-label', `“${v.title}” 목록에서 삭제`);
+    li.append(a, span('pct', `이해도 ${v.pct}%`), span('date', new Date(v.at).toLocaleDateString('ko-KR')), forget);
+    return li;
+  }));
+  document.getElementById('rewatchEmpty')!.hidden = videos.length > 0;
+  document.getElementById('rewatchClear')!.hidden = videos.length === 0;
+}
+document.getElementById('rewatchClear')!.addEventListener('click', () => { ask({ type: 'forgetVideo', url: null }).catch(() => {}); });
+renderRewatch();
+chrome.storage.onChanged.addListener((c) => { if (c.rewatch) renderRewatch(); });
