@@ -83,6 +83,15 @@ const CSS = `
 .false-friend[hidden] { display: none; }
 .false-friend strong { color: var(--redpen); margin-right: 4px; }
 
+.family { margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; font-size: 13px; }
+.family[hidden] { display: none; }
+.family-label { color: var(--muted); margin-right: 2px; }
+.family .fw { font-family: "Iowan Old Style", Georgia, "Times New Roman", serif; font-size: 14px; padding: 0 5px; border-radius: 3px; }
+.family .fw[data-s="unknown"] { background: rgba(120, 165, 255, 0.28); }
+.family .fw[data-s="seen"] { background: rgba(255, 170, 90, 0.34); }
+.family .fw[data-s="learning"] { background: rgba(255, 222, 60, 0.5); }
+.family .fw[data-s="known"]::after { content: " ✓"; color: var(--muted); }
+
 .defs { margin: 10px 0; padding: 0 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .defs li { margin: 2px 0; }
 .defs em { font-style: normal; color: var(--ink); margin-right: 4px; }
@@ -153,6 +162,7 @@ export class WordPopup {
       <p class="false-friend" hidden><strong>콩글리시 주의</strong><span></span></p>
       <div class="expressions"></div>
       <ol class="defs"></ol>
+      <p class="family" hidden><span class="family-label">같은 뿌리</span></p>
       <div class="status" role="group" aria-label="단어 상태"></div>
       <div class="actions">
         <button class="ignore">이 단어 무시하기</button>
@@ -202,6 +212,23 @@ export class WordPopup {
   setKoreanGloss(candidates: KoreanCandidate[]): void {
     if (!this.card) return;
     q(this.card, '.gloss').textContent = candidates[0]?.ko ?? '';
+    this.reposition();
+  }
+
+  /**
+   * Word family (families.ts) with each member's status, colored like the page
+   * highlights (known ones get a check) -- so "decision" shows you already
+   * know "decide". Re-called by content.ts when statuses change.
+   */
+  setFamily(items: { lemma: string; status: WordStatus }[]): void {
+    if (!this.card) return;
+    const box = q(this.card, '.family');
+    box.replaceChildren(box.firstElementChild!, ...items.map((it) => {
+      const s = el('span', { class: 'fw', 'data-s': it.status }, it.lemma);
+      s.title = { unknown: '모름', seen: '봤어요', learning: '학습 중', known: '알아요', ignored: '무시' }[it.status];
+      return s;
+    }));
+    box.hidden = !items.length;
     this.reposition();
   }
 

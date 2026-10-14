@@ -205,6 +205,14 @@ a.btn { text-decoration: none; display: inline-block; }
 .sheet-card { width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; background: var(--paper); border-radius: 12px 12px 0 0; padding: 18px 20px calc(18px + env(safe-area-inset-bottom)) 20px; box-shadow: 0 -10px 40px -12px rgba(29, 34, 48, 0.5); }
 .sheet-head { display: flex; align-items: center; gap: 8px; }
 .sheet-head .lemma { font-size: 24px; font-weight: 700; margin-right: auto; }
+.sheet-card .family { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; font-size: 13px; margin: -4px 0 10px; }
+.sheet-card .family[hidden] { display: none; }
+.sheet-card .family-label { color: var(--muted); }
+.sheet-card .fw { font-family: "Iowan Old Style", Georgia, serif; padding: 0 5px; border-radius: 3px; }
+.sheet-card .fw.s-known::after { content: " ✓"; color: var(--muted); }
+.sheet-card .fw.s-unknown { background: rgba(120, 165, 255, 0.28); }
+.sheet-card .fw.s-seen { background: rgba(255, 170, 90, 0.34); }
+.sheet-card .fw.s-learning { background: rgba(255, 222, 60, 0.5); }
 .sheet-card .gloss { font-size: 17px; margin: 6px 0 10px; min-height: 1.2em; }
 .sheet-card .chips { margin-bottom: 10px; }
 .sheet-defs { display: grid; gap: 6px; margin-bottom: 14px; }

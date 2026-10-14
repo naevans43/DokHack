@@ -113,6 +113,8 @@ export interface LookupResult {
   falseFriend?: string | null;
   /** Slang / collocation notes for the word in this sentence (expressions.ts). */
   expressions?: { kind: 'slang' | 'collocation'; phrase: string; note: string }[];
+  /** Related word forms from the same root (families.ts): decide -> decision, decisive. */
+  family?: string[];
 }
 
 // A Korean gloss candidate from the local KRDICT reverse index, ranked by

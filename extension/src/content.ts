@@ -66,6 +66,7 @@ async function main(): Promise<void> {
       words = (changes.words.newValue as WordMap) ?? {};
       highlighter?.updateWords(words);
       if (popup?.current) popup.setStatus(statusOf(words, popup.current.lemma));
+      showFamily();
     }
     if (changes.settings) applySettings(changes.settings.newValue as Settings);
   });
@@ -306,6 +307,7 @@ function openWord(node: Text, token: Token, range: Range): void {
       if (id !== session) return;
       lastLookup = r;
       popup?.setLookup(r);
+      showFamily();
       if (editor?.isOpen) {
         editor.setDictionaryDefs(r.definitions);
         editor.setFalseFriend(r.falseFriend ?? null);
@@ -322,6 +324,12 @@ function openWord(node: Text, token: Token, range: Range): void {
       if (editor?.isOpen) editor.setKoreanCandidates(candidates);
     })
     .catch(() => {});
+}
+
+/** The open word's family (families.ts), each with its current status. */
+function showFamily(): void {
+  if (!popup?.isOpen || !lastLookup?.family) return;
+  popup.setFamily(lastLookup.family.map((lemma) => ({ lemma, status: statusOf(words, lemma) })));
 }
 
 // Roadmap item 11: a captured audio-clip/frame blob is pushed to the

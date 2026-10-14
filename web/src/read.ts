@@ -1,6 +1,7 @@
 import { comprehensionOf, TARGET_PCT } from '../../extension/src/comprehension';
 import { lookupExpressions, type ExpressionNote } from '../../extension/src/expressions';
 import { COLLOCATION_PREFIX, FALSE_FRIEND_PREFIX, isUsageNote, lookupFalseFriend, SLANG_PREFIX } from '../../extension/src/konglish';
+import { lookupFamily } from '../../extension/src/families';
 import { lookupKorean } from '../../extension/src/krdict';
 import { tokenize } from '../../extension/src/nlp';
 import { lookupEnglish } from '../../extension/src/wordnet';
@@ -182,15 +183,24 @@ async function openWord(span: HTMLElement): Promise<void> {
   if (statusOf(token.lemma) === 'unknown') setStatus(token.lemma, 'seen').then(renderStatusButtons);
   renderStatusButtons();
 
-  const [korean, english, falseFriend, expressions] = await Promise.all([
+  const [korean, english, falseFriend, expressions, family] = await Promise.all([
     lookupKorean(token.lemma, sentence, token.pos).catch(() => [] as KoreanCandidate[]),
     lookupEnglish(token.lemma, sentence, token.pos).catch(() => null),
     lookupFalseFriend(token.surface, token.lemma).catch(() => null),
     lookupExpressions(token.surface, sentence, token.lemma).catch(() => [] as ExpressionNote[]),
+    lookupFamily(token.lemma).catch(() => [] as string[]),
   ]);
   if (id !== openId) return; // moved on to another word
   $('sheetGloss').textContent = korean[0]?.ko ?? '';
+  showFamily(family);
   showCandidates(korean, english, falseFriend, expressions);
+}
+
+/** Same-root words (../extension/src/families.ts), colored by status like the text. */
+function showFamily(family: string[]): void {
+  const box = $('sheetFamily');
+  box.replaceChildren(el('span', { class: 'family-label' }, '같은 뿌리'), ...family.map((l) => el('span', { class: `fw s-${statusOf(l)}` }, l)));
+  box.hidden = !family.length;
 }
 
 async function saveCard(): Promise<void> {
