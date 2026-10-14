@@ -1,7 +1,8 @@
 import { fsrs, generatorParameters, Rating, type Card, type Grade, type State } from 'ts-fsrs';
 import { definitionClass } from '../../extension/src/konglish';
 import { stopSpeaking } from '../../extension/src/tts';
-import { splitSentence, type CardRow } from './cards-api';
+import { patchCard, splitSentence, type CardRow } from './cards-api';
+import { LEECH_LAPSES, leechAlternatives } from './leech';
 import { mediaBlock } from './media';
 import { renderNav, requireSession } from './nav';
 import {
@@ -27,6 +28,7 @@ const defsEl = document.getElementById('defs')!;
 const mediaEl = document.getElementById('media')!;
 const revealBtn = document.getElementById('reveal') as HTMLButtonElement;
 const ratingsEl = document.getElementById('ratings')!;
+const leechEl = document.getElementById('leech')!;
 const doneEl = document.getElementById('done')!;
 const dailyProgressEl = document.getElementById('dailyProgress')!;
 const dailyOn = document.getElementById('dailyOn') as HTMLInputElement;
@@ -178,6 +180,49 @@ function renderCurrent(): void {
   defsEl.hidden = true;
   revealBtn.hidden = false;
   ratingsEl.hidden = true;
+  renderLeech(current);
+}
+
+/** Leech rescue (leech.ts): a card failed again and again gets an offer of easier sentences for the same word. */
+function renderLeech(c: CardRow): void {
+  leechEl.hidden = c.lapses < LEECH_LAPSES;
+  if (leechEl.hidden) return;
+  const intro = el('p', {}, `이 카드를 ${c.lapses}번 틀렸어요. 문장이 어려워서일 수 있어요. 같은 단어가 나오는 더 쉬운 문장으로 바꿔 볼까요?`);
+  const show = el('button', { type: 'button', class: 'btn sm' }, '쉬운 문장 보기');
+  show.addEventListener('click', async () => {
+    show.replaceWith(el('p', { class: 'muted' }, '찾는 중이에요…'));
+    const alts = await leechAlternatives(c).catch(() => []);
+    if (queue[0]?.id !== c.id) return; // moved on meanwhile
+    const list = el('ul');
+    if (!alts.length) list.append(el('li', { class: 'muted' }, '바꿀 만한 문장을 찾지 못했어요.'));
+    for (const a of alts) {
+      const alt = el('span', { class: 'alt' });
+      alt.append(a.sentence.slice(0, a.targetStart), el('mark', {}, a.surface), a.sentence.slice(a.targetStart + a.surface.length));
+      const use = el('button', { type: 'button', class: 'btn sm' }, '이 문장으로 바꾸기');
+      use.addEventListener('click', async () => {
+        use.setAttribute('disabled', '');
+        try {
+          // Only the sentence changes -- never an FSRS field (same rule as the cards page).
+          await patchCard(c.id, { sentence: a.sentence, target_start: a.targetStart });
+          if (queue[0]?.id === c.id) {
+            queue[0] = { ...queue[0], sentence: a.sentence, target_start: a.targetStart };
+            renderCurrent();
+            leechEl.hidden = false;
+            leechEl.replaceChildren(el('p', {}, '문장을 바꿨어요. 이제 이 문장으로 복습해요.'));
+          }
+        } catch {
+          use.removeAttribute('disabled');
+          use.textContent = '다시 시도';
+        }
+      });
+      const li = el('li');
+      li.append(alt, el('span', { class: 'src' }, a.source), use);
+      list.append(li);
+    }
+    leechEl.querySelector('p.muted')?.remove();
+    leechEl.append(list);
+  });
+  leechEl.replaceChildren(intro, show);
 }
 
 async function loadQueue(): Promise<void> {
