@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DokHack 독해크</title>
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page">
+    <h1>안녕하세요</h1>
+    <p class="lead muted" id="lead">&nbsp;</p>
+
+    <div class="due-card">
+      <div>
+        <div class="big" id="dueBig">—</div>
+        <div class="muted" id="dueSub"></div>
+      </div>
+      <a class="btn primary" id="startReview" href="review.html" hidden>복습 시작</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="muted">전체 카드</span><span class="n" id="statTotal">—</span></div>
+      <div class="stat"><span class="muted">오늘 복습</span><span class="n" id="statDue">—</span></div>
+      <div class="stat"><span class="muted">익숙해진 카드</span><span class="n" id="statMastered">—</span></div>
+    </div>
+
+    <div id="progress" hidden></div>
+
+    <div class="section-head">
+      <h2>최근에 저장한 카드</h2>
+      <a class="muted" href="cards.html">카드 전체 보기 →</a>
+    </div>
+    <ul class="rows" id="recent"></ul>
+    <p class="empty" id="empty" hidden>아직 저장한 카드가 없어요. 확장 프로그램으로 영어 글에서 단어를 클릭해 문장을 저장해 보세요.</p>
+    <p class="muted" id="loadError" hidden>카드를 불러오지 못했습니다. 잠시 후 다시 시도하세요.</p>
+  </main>
+  <script src="home.js"></script>
+</body>
+</html>

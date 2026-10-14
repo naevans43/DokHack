@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>독해크 읽기</title>
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page read">
+    <h1>글 붙여넣어 읽기</h1>
+    <p class="lead muted">영어 글을 붙여넣으면 모르는 단어가 표시돼요. 단어를 눌러 뜻을 보고, 문장을 카드로 저장할 수 있어요. 확장 프로그램이 없는 휴대폰에서도 돼요.</p>
+
+    <textarea id="paste" rows="7" placeholder="여기에 영어 글을 붙여넣으세요"></textarea>
+    <div class="row">
+      <button class="btn primary" id="analyzeBtn" type="button">분석하기</button>
+      <button class="btn" id="clearBtn" type="button">지우기</button>
+    </div>
+    <p class="muted small" id="analyzeNote" hidden></p>
+    <p class="muted small" id="vocabHint" hidden>아직 아는 단어가 동기화되지 않았어요. 확장 프로그램에서 ‘모두 동기화’를 누르면 아는 단어가 여기에 반영돼요.</p>
+    <p class="muted small" id="markNote" hidden>단어 표시를 서버에 저장하지 못했어요. 이 페이지에서만 유지돼요.</p>
+
+    <div class="coverage" id="coverage" hidden>
+      <div class="bar" aria-hidden="true" id="coverageBar"><span></span></div>
+      <p id="coverageText"></p>
+    </div>
+    <p class="muted small" id="docHint" hidden>단어를 눌러 보세요. 파란색은 모르는 단어, 주황색은 본 단어, 노란색은 학습 중인 단어예요.</p>
+    <article id="doc" class="doc"></article>
+  </main>
+
+  <div id="sheet" class="word-sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-label="단어 정보">
+      <div class="sheet-head">
+        <span class="lemma serif" id="sheetLemma"></span>
+        <button class="btn sm" id="speak" type="button" aria-label="발음 듣기">듣기</button>
+        <button class="btn sm sheet-x" id="sheetClose" type="button" aria-label="닫기">닫기</button>
+      </div>
+      <div class="muted small" id="sheetForm"></div>
+      <p class="gloss" id="sheetGloss"></p>
+      <div class="chips" id="sheetStatus" role="group" aria-label="단어 상태"></div>
+      <div id="sheetDefs" class="sheet-defs"></div>
+      <div class="sheet-actions">
+        <button class="btn primary" id="saveCard" type="button" disabled>카드 만들기</button>
+        <span class="muted small" id="cardNote" role="status"></span>
+      </div>
+    </div>
+  </div>
+  <script src="read.js"></script>
+</body>
+</html>

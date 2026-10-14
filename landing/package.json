@@ -1,0 +1,6 @@
+{
+  "name": "dokhack-landing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DokHack's landing/explainer page — no build step, just static HTML/CSS deployed via Cloudflare Workers"
+}

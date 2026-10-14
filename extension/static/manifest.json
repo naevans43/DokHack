@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "DokHack",
+  "description": "영어 글을 읽으며 모르는 단어를 확인하고 문장을 저장하세요.",
+  "version": "0.1.0",
+  "minimum_chrome_version": "105",
+  "permissions": ["storage", "unlimitedStorage", "activeTab"],
+  "host_permissions": ["https://*.supabase.co/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_popup": "action.html", "default_title": "DokHack" },
+  "options_page": "library.html"
+}

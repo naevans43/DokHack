@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.wrangler/
+
+# Build outputs, regenerated from extension/dist (see web/README.md)
+*.zip

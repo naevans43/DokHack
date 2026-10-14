@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>독해크 아는 단어 테스트</title>
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page placement">
+    <h1>아는 단어 자동 표시</h1>
+    <p class="lead muted">몇 가지 단어를 보고 아는 단어를 모두 골라주세요. 결과에 맞춰 비슷한 수준의 자주 쓰는 단어를 한 번에 ‘아는 단어’로 표시해요. 건너뛰고 글을 읽으면서 단어를 하나씩 직접 표시해도 괜찮아요.</p>
+
+    <p id="checking" class="muted">확장 프로그램을 찾는 중이에요…</p>
+
+    <div id="missing" hidden>
+      <p><b>이 브라우저에서 독해크 확장 프로그램을 찾지 못했어요.</b></p>
+      <p class="muted">테스트 결과는 확장 프로그램에 저장되기 때문에, 확장 프로그램이 설치된 같은 브라우저(Chrome / Whale)에서 이 페이지를 열어야 해요. 방금 설치하거나 업데이트했다면 확장 프로그램을 새로고침(↻)한 뒤 이 페이지를 새로고침해 주세요.</p>
+      <p><a class="btn" href="start.html#install">설치 방법 보기</a></p>
+    </div>
+
+    <div id="intro" hidden>
+      <button class="btn primary big" id="startTest" type="button">테스트 시작</button>
+    </div>
+
+    <div id="testArea" hidden>
+      <p class="muted">아는 단어를 모두 클릭하세요.</p>
+      <div id="testWords" class="word-grid"></div>
+      <p><button class="btn primary" id="testSubmit" type="button">완료</button></p>
+    </div>
+
+    <div id="result" hidden></div>
+  </main>
+  <script src="placement.js"></script>
+</body>
+</html>

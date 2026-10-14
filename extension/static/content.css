@@ -1,0 +1,72 @@
+/* Word-status colors on the page. Blue = not yet known, yellow = the
+   highlighter you use on words you're studying. Known words stay plain. */
+::highlight(mine-unknown) { background-color: rgba(120, 165, 255, 0.28); }
+::highlight(mine-seen) { background-color: rgba(255, 170, 90, 0.34); }
+::highlight(mine-learning) { background-color: rgba(255, 222, 60, 0.5); }
+/* Cues that a word is clickable, incl. "known" words which get no status
+   color at all otherwise. Painted above the status colors (higher priority
+   in highlighter.ts) so it stays visible on unknown/learning words too. */
+::highlight(mine-hover) { background-color: rgba(29, 34, 48, 0.14); }
+
+dokhack-popup { all: initial; }
+
+/* YouTube transcript viewer + subtitle bar (roadmap item 7, phase 2).
+   Plain light-DOM elements (not a shadow root, unlike the popup/editor)
+   so their word text gets mined by the same Highlighter/click pipeline as
+   any other page -- see youtube.ts. Design tokens match popup.ts's, kept
+   as literals here since content.css has no shared :root scope with it. */
+.dokhack-yt-panel {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #FCFCFA; color: #1D2230;
+  border: 1px solid #D5E3F3; border-radius: 12px;
+  margin-bottom: 12px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+.dokhack-yt-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid #D5E3F3;
+}
+.dokhack-yt-panel-title { font-size: 13px; font-weight: 700; }
+.dokhack-yt-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0; border: none; border-radius: 6px;
+  background: transparent; color: #1D2230; cursor: pointer;
+}
+.dokhack-yt-icon-btn:hover { background: #EEF1F6; }
+.dokhack-yt-header-actions { display: inline-flex; align-items: center; gap: 8px; }
+.dokhack-yt-chip {
+  border: 1px solid #C9CFDA; border-radius: 999px; background: #fff; color: #1D2230;
+  padding: 1px 10px; font-size: 12px; cursor: pointer;
+}
+.dokhack-yt-chip-on { background: #1D2230; color: #fff; border-color: #1D2230; }
+.dokhack-yt-panel-list { max-height: 360px; overflow-y: auto; }
+.dokhack-yt-panel-collapsed .dokhack-yt-panel-list,
+.dokhack-yt-panel-collapsed .dokhack-yt-jump-current { display: none; }
+.dokhack-yt-line {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 8px 12px; border-bottom: 1px solid #EEF1F6;
+}
+.dokhack-yt-line:hover { background: #F5F7FB; }
+.dokhack-yt-line-current { background: rgba(200, 16, 46, 0.07); }
+.dokhack-yt-line-text { flex: 1; font-size: 13px; line-height: 1.5; }
+.dokhack-yt-line-meta { display: flex; align-items: center; gap: 4px; flex: none; }
+.dokhack-yt-ts { font: 11px ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: #697083; }
+.dokhack-yt-jump-current {
+  position: sticky; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: block; margin: 0 auto -34px; padding: 6px 14px;
+  border: none; border-radius: 999px; background: #1D2230; color: #FCFCFA;
+  font-size: 12px; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.dokhack-yt-jump-current[hidden] { display: none; }
+
+.dokhack-yt-bar {
+  position: absolute; left: 0; right: 0; bottom: 64px;
+  display: flex; justify-content: center; pointer-events: none; z-index: 61;
+}
+.dokhack-yt-bar-text {
+  pointer-events: auto; max-width: 80%; text-align: center;
+  font-family: "Iowan Old Style", Georgia, serif; font-size: 20px; line-height: 1.4;
+  color: #FCFCFA; background: rgba(15, 15, 15, 0.7);
+  padding: 6px 14px; border-radius: 6px;
+}

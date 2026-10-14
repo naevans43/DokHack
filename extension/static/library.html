@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DokHack 저장한 문장</title>
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="library.css" />
+</head>
+<body>
+  <main>
+    <header class="top">
+      <h1>저장한 문장</h1>
+      <div class="top-actions">
+        <a class="btn" id="siteLink" href="#" target="_blank" rel="noreferrer">웹사이트 ↗</a>
+        <button class="btn" id="exportAnki" title="문장, 뜻, 오디오, 영상 화면을 Anki로 가져올 수 있는 zip">Anki용 내보내기 (미디어 포함)</button>
+        <button class="btn" id="export">CSV 내보내기</button>
+      </div>
+    </header>
+    <p class="muted" id="count"></p>
+    <ol id="list" class="list"></ol>
+    <p id="empty" class="empty" hidden>
+      아직 저장한 문장이 없습니다. 영어 글에서 단어를 클릭한 뒤 ‘문장 저장’을 누르면 여기에 모입니다.
+    </p>
+
+    <section class="test" id="settings">
+      <h2>스캔 설정</h2>
+      <p class="muted">기본적으로 독해크는 페이지를 열어도 아무것도 표시하지 않아요. 툴바의 독해크 아이콘에서 ‘이 페이지 스캔하기’를 누르면 그 페이지의 모르는 단어가 표시돼요.</p>
+      <label class="check"><input type="checkbox" id="autoScan" /> 페이지를 열 때마다 자동으로 스캔하기</label>
+      <p class="muted small">켜면 모든 영어 페이지에서 바로 단어가 표시돼요. 페이지가 많이 칠해져 보이거나 브라우저가 느려진다면 꺼 두세요.</p>
+      <label class="check"><input type="checkbox" id="autoSeen" /> 단어를 열어 보면 자동으로 ‘봤어요’로 표시하기</label>
+      <p class="muted small">모르는 단어의 카드를 열면 파란색에서 주황색으로 바뀌어, 확인만 해 본 단어와 한 번도 안 본 단어를 구분해 줘요. 이미 정한 상태는 바꾸지 않아요.</p>
+      <label class="check"><input type="checkbox" id="autoPauseLines" /> 유튜브에서 자막 한 줄이 끝날 때마다 영상 멈추기</label>
+      <p class="muted small">기본은 꺼져 있어요. 대본 패널 위쪽의 ‘줄마다 멈춤’ 버튼으로도 켜고 끌 수 있어요.</p>
+    </section>
+
+    <section class="test" id="importer">
+      <h2>단어 목록 가져오기</h2>
+      <p class="muted">이미 아는 단어를 한 번에 표시할 수 있어요. 단어 목록(한 줄에 하나), Anki에서 ‘노트를 일반 텍스트로’ 내보낸 파일, 아무 영어 글이나 괜찮아요. 단어는 기본형으로 바꿔서 저장하고, 이미 표시한 단어는 건드리지 않아요.</p>
+      <textarea id="importText" rows="4" placeholder="여기에 붙여넣거나 아래에서 파일을 고르세요"></textarea>
+      <div class="row">
+        <input type="file" id="importFile" accept=".txt,.csv,.tsv,text/plain" />
+      </div>
+      <div class="row">
+        <select id="importStatus"><option value="known">알아요로 표시</option><option value="learning">학습 중으로 표시</option><option value="seen">봤어요로 표시</option></select>
+        <button class="btn primary" id="importGo">가져오기</button>
+      </div>
+      <p id="importResult" class="muted" hidden></p>
+    </section>
+
+    <section class="test" id="test">
+      <h2>아는 단어 자동 표시</h2>
+      <p class="muted">몇 가지 단어를 보고 아는 단어를 골라주면, 비슷한 수준의 자주 쓰는 단어를 한 번에 ‘아는 단어’로 표시해요. 이제 이 테스트는 복습 웹사이트에서 해요. 건너뛰고 글을 읽으면서 단어를 하나씩 직접 표시해도 괜찮아요.</p>
+      <div class="row"><a class="btn primary" id="placementLink" href="#" target="_blank" rel="noreferrer">웹사이트에서 테스트하기 ↗</a></div>
+    </section>
+
+    <section class="account" id="account">
+      <h2>복습 웹사이트 <a id="reviewLink" href="#" target="_blank" rel="noreferrer" class="btn" style="font-weight: 400; font-size: 13px; vertical-align: middle;">복습하러 가기 ↗</a></h2>
+      <div id="accountSignedOut">
+        <p class="muted">이메일로 로그인하면 저장한 카드가 복습 웹사이트에도 동기화되어, 다른 기기에서도 복습할 수 있어요.</p>
+        <div class="row">
+          <input id="accountEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+          <button class="btn" id="requestCode">코드 받기</button>
+        </div>
+        <div class="row" id="codeRow" hidden>
+          <input id="accountCode" type="text" inputmode="numeric" placeholder="이메일로 받은 코드" maxlength="12" autocomplete="one-time-code" />
+          <button class="btn primary" id="verifyCode">코드 확인</button>
+        </div>
+        <p id="accountError" class="muted" role="status" hidden></p>
+      </div>
+      <div id="accountSignedIn" hidden>
+        <p class="muted">연결됨: <strong id="accountEmailDisplay"></strong></p>
+        <p class="muted">동기화하면 저장한 카드를 올리고, 복습 웹사이트에서 충분히 잘 기억한 단어는 자동으로 알아요로 바뀌어요.</p>
+        <div class="row">
+          <button class="btn" id="syncAll">모두 동기화</button>
+          <button class="btn" id="logout">로그아웃</button>
+          <span id="syncStatus" class="muted" role="status"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="modal" class="modal" hidden>
+    <div class="modal-card" id="modalCard" role="dialog" aria-modal="true" aria-label="카드"></div>
+  </div>
+  <script src="library.js"></script>
+</body>
+</html>

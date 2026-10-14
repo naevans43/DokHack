@@ -1,0 +1,22 @@
+{
+  "name": "dokhack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sentence-mining browser extension for Korean speakers learning English",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "wink-eng-lite-web-model": "^1.8.1",
+    "wink-nlp": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.9",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "wordnet-db": "^3.1.14"
+  }
+}

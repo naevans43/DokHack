@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="pages.css" />
+  <style>
+    body { width: 280px; padding: 16px 16px 14px 32px;
+      background: linear-gradient(to right, transparent 18px, var(--margin) 18px, var(--margin) 19.5px, transparent 19.5px), var(--paper); }
+    .site { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+    .host { font-weight: 700; overflow-wrap: anywhere; }
+    .switch { width: 40px; height: 22px; flex: none; accent-color: var(--ink); }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; margin: 12px 0; }
+    dt { color: var(--muted); } dd { margin: 0; text-align: right; font-weight: 700; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+    .badge { display: inline-block; margin-left: 4px; background: var(--redpen); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; padding: 0 6px; line-height: 17px; }
+    .badge[hidden] { display: none; }
+    .scan { padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+    .scan .btn { width: 100%; padding: 8px 12px; }
+    .scan .hint { font-size: 12px; margin: 6px 0 8px; }
+    .coverage { margin: 0 0 10px; }
+    .coverage[hidden] { display: none; }
+    .coverage .bar { height: 6px; border-radius: 3px; background: var(--unknown); overflow: hidden; }
+    .coverage .bar span { display: block; height: 100%; width: 0; background: var(--ink); transition: width 0.3s; }
+    .coverage p { margin: 4px 0 0; font-size: 12.5px; }
+    .auto { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+    .auto input { accent-color: var(--ink); margin: 0; }
+    .site { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="scan">
+    <button class="btn primary" id="scan" disabled>이 페이지 스캔하기</button>
+    <p class="muted hint" id="scanHint">&nbsp;</p>
+    <div class="coverage" id="coverage" hidden>
+      <div class="bar" aria-hidden="true"><span id="coverageBar"></span></div>
+      <p id="coverageText"></p>
+    </div>
+    <label class="auto"><input type="checkbox" id="auto" /> 페이지를 열 때마다 자동으로 스캔</label>
+  </div>
+  <label class="site">
+    <span><span class="muted">이 사이트에서 사용</span><br /><span class="host" id="host">—</span></span>
+    <input type="checkbox" class="switch" id="toggle" />
+  </label>
+  <dl>
+    <dt><span class="dot" style="background: #FFD9B3"></span>본 단어</dt><dd id="seen">0</dd>
+    <dt><span class="dot" style="background: var(--learning)"></span>학습 중인 단어</dt><dd id="learning">0</dd>
+    <dt><span class="dot" style="border: 1px solid var(--ink)"></span>아는 단어</dt><dd id="known">0</dd>
+    <dt>저장한 문장</dt><dd id="cards">0</dd>
+  </dl>
+  <button class="btn primary" id="open" style="width: 100%">저장한 문장 보기</button>
+  <a class="btn" id="review" href="#" target="_blank" rel="noreferrer" style="width: 100%; display: block; box-sizing: border-box; text-align: center; margin-top: 6px;">웹사이트 열기 <span class="badge" id="dueBadge" hidden></span></a>
+  <p class="muted" style="font-size: 12px; margin: 8px 0 0; text-align: center;">복습과 카드 관리는 웹사이트에서 해요</p>
+  <script src="action.js"></script>
+</body>
+</html>

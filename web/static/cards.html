@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DokHack 카드</title>
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page">
+    <h1>카드</h1>
+    <p class="lead muted" id="count">&nbsp;</p>
+    <div class="cards-layout">
+      <section>
+        <div class="toolbar">
+          <input class="search" id="search" type="search" placeholder="단어 또는 문장 검색" aria-label="카드 검색" />
+          <div class="chips" id="chips" role="group" aria-label="카드 필터"></div>
+        </div>
+        <ul class="rows" id="list"></ul>
+        <p class="empty" id="empty" hidden></p>
+        <p class="muted" id="loadError" hidden>카드를 불러오지 못했습니다. 잠시 후 다시 시도하세요.</p>
+      </section>
+      <aside class="detail" id="detail" aria-live="polite">
+        <div class="detail-empty" id="detailEmpty">카드를 고르면 여기에 미리보기가 나와요.</div>
+        <div class="pcard" id="pcard" hidden></div>
+      </aside>
+    </div>
+  </main>
+  <script src="cards.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DokHack 복습 — 로그인</title>
+  <link rel="stylesheet" href="pages.css" />
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    main {
+      width: 360px; max-width: 100%; padding: 28px 24px 24px 38px; position: relative;
+      background:
+        linear-gradient(to right, transparent 17px, var(--margin) 17px, var(--margin) 18.5px, transparent 18.5px),
+        var(--paper);
+      border: 1px solid var(--line); border-radius: 8px;
+    }
+    h1 { font-size: 22px; margin-bottom: 6px; }
+    p.lead { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+    .row { display: flex; gap: 8px; margin-bottom: 10px; }
+    input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; font-size: 15px; }
+    #error { margin-top: 4px; color: var(--redpen); }
+    #error[hidden], #codeRow[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>단어장 복습</h1>
+    <p class="lead">이메일로 로그인하면 DokHack 확장 프로그램에서 저장한 카드를 복습할 수 있어요.</p>
+    <div class="row">
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      <button class="btn" id="requestCode">코드 받기</button>
+    </div>
+    <div class="row" id="codeRow" hidden>
+      <input id="code" type="text" inputmode="numeric" placeholder="이메일로 받은 코드" maxlength="12" autocomplete="one-time-code" />
+      <button class="btn primary" id="verifyCode">로그인</button>
+    </div>
+    <p id="error" class="muted" role="status" hidden></p>
+    <p class="muted" style="margin: 18px 0 0; font-size: 13px;">처음이신가요? <a href="start.html">설치와 사용 방법 보기</a></p>
+  </main>
+  <script src="sign-in.js"></script>
+</body>
+</html>

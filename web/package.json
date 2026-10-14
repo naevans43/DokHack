@@ -1,0 +1,19 @@
+{
+  "name": "dokhack-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Companion review website for DokHack — FSRS-scheduled review, synced with the extension via Supabase",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ts-fsrs": "^4.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

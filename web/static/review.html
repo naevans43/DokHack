@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DokHack 복습</title>
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="site.css" />
+  <style>
+    main.review { max-width: 560px; margin: 0 auto; padding: 32px 20px 64px; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+    h1 { font-size: 22px; }
+    #remaining { font-size: 13px; }
+
+    #card {
+      padding: 24px 24px 20px 38px; position: relative;
+      background:
+        linear-gradient(to right, transparent 17px, var(--margin) 17px, var(--margin) 18.5px, transparent 18.5px),
+        var(--paper);
+      border: 1px solid var(--line); border-radius: 8px;
+      min-height: 220px; display: flex; flex-direction: column;
+    }
+    #sentence { font-family: "Iowan Old Style", Georgia, "Times New Roman", serif; font-size: 22px; line-height: 1.6; margin: 0 0 16px; }
+    #sentence mark { background: var(--learning); color: inherit; padding: 0 1px; }
+    #defs { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 6px; font-size: 15px; }
+    #defs .gloss { color: var(--redpen); font-weight: 700; }
+    #defs .def { color: var(--muted); }
+    #defs[hidden] { display: none; }
+
+    #reveal { align-self: flex-start; margin-top: auto; }
+    #ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: auto; }
+    #ratings[hidden] { display: none; }
+    .rating { padding: 10px 0; }
+
+    #empty { text-align: center; color: var(--muted); padding: 60px 0; }
+    #empty[hidden] { display: none; }
+    #card[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="review">
+    <header>
+      <h1>오늘의 복습</h1>
+      <span id="remaining" class="muted"></span>
+    </header>
+
+    <div id="card" hidden>
+      <p id="sentence"></p>
+      <div id="media"></div>
+      <ul id="defs" hidden></ul>
+      <button class="btn primary" id="reveal">뜻 보기</button>
+      <div id="ratings" hidden></div>
+    </div>
+    <p id="empty" hidden>복습할 카드가 없습니다. 확장 프로그램에서 문장을 더 저장해 보세요. <a href="cards.html">카드 보기</a></p>
+  </main>
+  <script src="review.js"></script>
+</body>
+</html>
