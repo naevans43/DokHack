@@ -363,6 +363,10 @@ export class Highlighter {
         batch.forEach(({ unit, text, nodes }, i) => {
           // Content may have changed while we waited; if so it's already re-queued.
           if (!unit.isConnected || nodes.map((n) => n.data).join('') !== text) return;
+          // Excluded while we waited: seen live -- YouTube's transcript panel
+          // was open when its lines were queued, then closed (by our own
+          // harvest) before the results came back.
+          if (this.excluded(nodes[0])) return;
           try {
             this.register(unit, nodes, results[i] ?? []);
             this.unitText.set(unit, text);

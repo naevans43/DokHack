@@ -533,15 +533,31 @@ const EXPANDED = 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED';
 // still be showing (and re-opening) the *previous* video's transcript -- the
 // "transcript from the previous video" bug. Lines matching what another video
 // showed are never accepted for this one.
-const recentHarvests: { path: string; sig: string }[] = [];
+const recentHarvests: { path: string; sig: string; keys: Set<string> }[] = [];
+// Seen live, switching between real TED videos: mid-navigation YouTube's panel
+// briefly held the new video's 212 segments *followed by* the previous video's
+// 158, and that mixed list sat still long enough to look settled. Its first
+// lines were new and its last timestamp fit inside the new video, so it was
+// accepted -- 370 lines, half from the wrong video. Two checks catch it: lines
+// of one transcript never go back in time, and a real transcript shares
+// (almost) no timestamped lines with another video's.
+const MAX_SHARED_LINES = 0.2;
+
+const lineKey = (l: TranscriptLine) => `${l.startMs}|${l.text}`;
 
 function linesSig(lines: TranscriptLine[]): string {
-  return `${lines.length}:${lines.slice(0, 5).map((l) => `${l.startMs}=${l.text}`).join('|')}`;
+  return `${lines.length}:${lines.slice(0, 5).map(lineKey).join('|')}`;
 }
 
 function isStale(lines: TranscriptLine[], path: string): boolean {
+  if (lines.some((l, i) => i > 0 && l.startMs < lines[i - 1].startMs)) return true; // two transcripts run together
   const sig = linesSig(lines);
-  if (recentHarvests.some((h) => h.path !== path && h.sig === sig)) return true;
+  for (const h of recentHarvests) {
+    if (h.path === path) continue;
+    if (h.sig === sig) return true;
+    const shared = lines.filter((l) => h.keys.has(lineKey(l))).length;
+    if (shared > lines.length * MAX_SHARED_LINES) return true;
+  }
   // A transcript running well past this video's end belongs to another video.
   const durationMs = video && isFinite(video.duration) ? video.duration * 1000 : (() => {
     const v = document.querySelector('video');
@@ -600,7 +616,10 @@ async function harvestTranscript(gen: number): Promise<TranscriptLine[] | null> 
       const lines = readLines(segs);
       if (!lines.length || isStale(lines, path)) continue;
       closeAnyOpenTranscriptPanels(); // we render our own copy
-      recentHarvests.unshift({ path, sig: linesSig(lines) });
+      recentHarvests.unshift({ path, sig: linesSig(lines), keys: new Set(lines.map(lineKey)) });
+      // YouTube was seen re-opening its own panel a moment after a navigation;
+      // ours replaces it, so close it again once things have settled.
+      for (const ms of [2000, 6000]) setTimeout(() => { if (gen === generation) closeAnyOpenTranscriptPanels(); }, ms);
       recentHarvests.length = Math.min(recentHarvests.length, 8);
       return lines;
     }
