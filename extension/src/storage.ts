@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoScan: false,
   autoSeen: true,
   autoPauseLines: false,
+  freqBadges: true,
 };
 
 export async function getWords(): Promise<WordMap> {

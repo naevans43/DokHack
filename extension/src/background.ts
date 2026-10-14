@@ -1,6 +1,7 @@
 import { base64ToBytes, bytesToBase64 } from './binary';
 import { deleteBlob, getBlob, putBlob } from './blobstore';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from './config';
+import { annotateFrequency } from './frequency';
 import { lookupFalseFriend } from './konglish';
 import { lookupKorean } from './krdict';
 import { tokenize } from './nlp';
@@ -664,7 +665,7 @@ async function handle(req: Request): Promise<unknown> {
   switch (req.type) {
     case 'tokenize':
       // The NLP model (~3 MB) lives here, loaded once, instead of in every tab.
-      return Promise.all(req.texts.map(tokenize));
+      return Promise.all(req.texts.map(async (t) => annotateFrequency(await tokenize(t))));
     case 'lookup': {
       const [english, falseFriend] = await Promise.all([
         lookupEnglish(req.lemma, req.sentence, req.pos),

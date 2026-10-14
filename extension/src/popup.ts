@@ -66,7 +66,9 @@ const CSS = `
 }
 .speak:hover { background: #EEF1F6; }
 .sub { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted); font-size: 13px; margin-top: 2px; }
-.form:empty { display: none; }
+.form:empty, .freq:empty { display: none; }
+.freq { color: var(--redpen); }
+.freq[data-f="rare"] { color: var(--muted); }
 
 .gloss {
   margin: 8px 0 0; padding: 6px 0; color: var(--redpen); font-size: 18px; font-weight: 700;
@@ -146,7 +148,7 @@ export class WordPopup {
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1.5v9l8-4.5z" fill="currentColor"/></svg>
         </button>
       </div>
-      <div class="sub"><span class="form"></span></div>
+      <div class="sub"><span class="form"></span><span class="freq"></span></div>
       <p class="gloss"></p>
       <p class="false-friend" hidden><strong>콩글리시 주의</strong><span></span></p>
       <ol class="defs"></ol>
@@ -159,6 +161,11 @@ export class WordPopup {
     if (token.surface.toLowerCase() !== token.lemma) {
       q(card, '.form').textContent = `${token.surface}의 기본형`;
     }
+    // Frequency badge (frequency.ts): the same signal as the page underline, in words.
+    q(card, '.freq').dataset.f = token.freq ?? '';
+    q(card, '.freq').textContent = token.freq === 'common'
+      ? `자주 쓰는 단어 (상위 ${token.rank!.toLocaleString('ko-KR')}위)`
+      : token.freq === 'rare' ? '드물게 쓰는 단어' : '';
 
     const statusBox = q(card, '.status');
     for (const s of STATUSES) {

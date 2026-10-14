@@ -3,6 +3,11 @@
 ::highlight(mine-unknown) { background-color: rgba(120, 165, 255, 0.28); }
 ::highlight(mine-seen) { background-color: rgba(255, 170, 90, 0.34); }
 ::highlight(mine-learning) { background-color: rgba(255, 222, 60, 0.5); }
+/* Frequency badge (frequency.ts), on unknown/seen words only: a red-pen
+   underline = one of the most common words, worth learning first; a dotted
+   grey one = rare, fine to skip. */
+::highlight(mine-common) { text-decoration: underline 2px #C8102E; text-underline-offset: 3px; }
+::highlight(mine-rare) { text-decoration: underline 1px dotted #697083; text-underline-offset: 3px; }
 /* Cues that a word is clickable, incl. "known" words which get no status
    color at all otherwise. Painted above the status colors (higher priority
    in highlighter.ts) so it stays visible on unknown/learning words too. */

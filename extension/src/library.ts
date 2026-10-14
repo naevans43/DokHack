@@ -420,7 +420,7 @@ document.getElementById('importGo')!.addEventListener('click', async () => {
 });
 
 // Scan/seen/pause settings (auto-scan and auto-pause are off by default); auto-scan also lives in the popup, both write the same setting.
-const flags = (['autoScan', 'autoSeen', 'autoPauseLines'] as const).map((key) => ({
+const flags = (['autoScan', 'autoSeen', 'autoPauseLines', 'freqBadges'] as const).map((key) => ({
   key, box: document.getElementById(key) as HTMLInputElement,
 }));
 const showFlags = () => getSettings().then((s) => flags.forEach(({ key, box }) => { box.checked = s[key]; }));

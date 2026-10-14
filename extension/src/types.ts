@@ -13,6 +13,10 @@ export interface Token {
   // dictionary lookups) treats a lemma as necessarily one word.
   lemma: string;
   pos: string; // universal POS tag from wink-nlp
+  // Frequency badge (frequency.ts, set by the background worker): the lemma's
+  // rank in static/frequency.json, and whether that makes it common or rare.
+  rank?: number;
+  freq?: 'common' | 'rare';
 }
 
 // One meaning picked in the card editor — an English dictionary definition,
@@ -71,6 +75,8 @@ export interface Settings {
   autoSeen: boolean;
   /** YouTube: pause at the end of every subtitle line. OFF by default. */
   autoPauseLines: boolean;
+  /** Underline unknown words that are very common (and, when the data allows, mark rare ones). On by default. */
+  freqBadges: boolean;
 }
 
 /** Popup -> content script (via chrome.tabs.sendMessage). `dokhack` is the discriminator. */

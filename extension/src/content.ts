@@ -79,6 +79,7 @@ function applySettings(next: Settings): void {
   settings = { ...DEFAULT_SETTINGS, ...next };
   setAutoPauseLines(settings.autoPauseLines);
   reconcile();
+  highlighter?.setFreqBadges(settings.freqBadges);
 }
 
 /** Brings the page in line with (site allowed) AND (scan requested, or else the autoScan setting). */
@@ -92,6 +93,7 @@ function enable(): void {
   popup = new WordPopup();
   editor = new CardEditor();
   highlighter = new Highlighter(words, () => popup?.host ?? null);
+  highlighter.setFreqBadges(settings.freqBadges);
   highlighter.start();
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKey, true);

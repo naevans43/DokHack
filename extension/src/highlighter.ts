@@ -60,14 +60,21 @@ export class Highlighter {
   private unitTokens = new WeakMap<object, Token[]>(); // unit -> tokens, in unit-flat coordinates
   private entries = new WeakMap<object, Entry[]>(); // unit -> its highlight ranges
   private byLemma = new Map<string, Set<Range>>();
-  private hl: Record<'unknown' | 'seen' | 'learning' | 'hover', Highlight>;
+  private hl: Record<'unknown' | 'seen' | 'learning' | 'hover' | 'common' | 'rare', Highlight>;
+  // Frequency badge (frequency.ts): an underline on a not-yet-studied word
+  // that's very common or rare -- only while it's unknown or seen.
+  private freqOf = new WeakMap<Range, 'common' | 'rare'>();
+  private freqBadges = true;
   private queue = new Set<Unit>();
   private pumping = false;
   private generation = 0; // bumps on stop() so in-flight batches are dropped
   private observer?: MutationObserver;
 
   constructor(private words: WordMap, private ignoreRoot: () => Element | null) {
-    this.hl = { unknown: new Highlight(), seen: new Highlight(), learning: new Highlight(), hover: new Highlight() };
+    this.hl = {
+      unknown: new Highlight(), seen: new Highlight(), learning: new Highlight(), hover: new Highlight(),
+      common: new Highlight(), rare: new Highlight(),
+    };
     this.hl.hover.priority = 1; // paints over the status color, not under it
   }
 
@@ -76,6 +83,8 @@ export class Highlighter {
     CSS.highlights.set('mine-seen', this.hl.seen);
     CSS.highlights.set('mine-learning', this.hl.learning);
     CSS.highlights.set('mine-hover', this.hl.hover);
+    CSS.highlights.set('mine-common', this.hl.common);
+    CSS.highlights.set('mine-rare', this.hl.rare);
     this.enqueueSubtree(document.body);
     this.observer = new MutationObserver((muts) => this.onMutations(muts));
     this.observer.observe(document.body, { childList: true, subtree: true, characterData: true });
@@ -90,6 +99,10 @@ export class Highlighter {
     CSS.highlights.delete('mine-seen');
     CSS.highlights.delete('mine-learning');
     CSS.highlights.delete('mine-hover');
+    CSS.highlights.delete('mine-common');
+    CSS.highlights.delete('mine-rare');
+    this.hl.common.clear();
+    this.hl.rare.clear();
     this.hl.unknown.clear();
     this.hl.seen.clear();
     this.hl.learning.clear();
@@ -197,9 +210,7 @@ export class Highlighter {
       const ranges = this.byLemma.get(lemma);
       if (!ranges) continue;
       for (const r of ranges) {
-        this.hl.unknown.delete(r);
-        this.hl.seen.delete(r);
-        this.hl.learning.delete(r);
+        this.unpaint(r);
         this.paint(r, statusOf(words, lemma));
       }
     }
@@ -207,11 +218,30 @@ export class Highlighter {
 
   // ---- internals ------------------------------------------------------
 
+  /** Turns the frequency badge on/off (settings.freqBadges) without re-tokenizing. */
+  setFreqBadges(on: boolean): void {
+    if (on === this.freqBadges) return;
+    this.freqBadges = on;
+    for (const [lemma, ranges] of this.byLemma) {
+      for (const r of ranges) { this.unpaint(r); this.paint(r, statusOf(this.words, lemma)); }
+    }
+  }
+
   private paint(range: Range, status: WordStatus): void {
     if (status === 'unknown') this.hl.unknown.add(range);
     else if (status === 'seen') this.hl.seen.add(range);
     else if (status === 'learning') this.hl.learning.add(range);
     // known / ignored: no highlight
+    const freq = this.freqOf.get(range);
+    if (freq && this.freqBadges && (status === 'unknown' || status === 'seen')) this.hl[freq].add(range);
+  }
+
+  private unpaint(range: Range): void {
+    this.hl.unknown.delete(range);
+    this.hl.seen.delete(range);
+    this.hl.learning.delete(range);
+    this.hl.common.delete(range);
+    this.hl.rare.delete(range);
   }
 
   /** Structural exclusion only (skip tags, editable, our own UI) -- not a "worth tokenizing" check. */
@@ -344,6 +374,7 @@ export class Highlighter {
       range.setStart(from.node, from.offset);
       range.setEnd(to.node, to.offset);
       entries.push({ range, lemma: t.lemma, tok: t });
+      if (t.freq) this.freqOf.set(range, t.freq);
       let set = this.byLemma.get(t.lemma);
       if (!set) this.byLemma.set(t.lemma, (set = new Set()));
       set.add(range);
@@ -357,9 +388,7 @@ export class Highlighter {
     const old = this.entries.get(unit);
     if (old) {
       for (const { range, lemma } of old) {
-        this.hl.unknown.delete(range);
-        this.hl.seen.delete(range);
-        this.hl.learning.delete(range);
+        this.unpaint(range);
         this.byLemma.get(lemma)?.delete(range);
       }
     }
