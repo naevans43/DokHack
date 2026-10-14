@@ -31,6 +31,10 @@ export interface EditorData {
   // custom transcript panel/subtitle bar (never the native-panel fallback,
   // never a plain page) -- null hides the whole capture section.
   youtubeCapture: { startMs: number; endMs: number; initialFrameDataUrl: string | null } | null;
+  // One-unknown sentence picks: how many other not-yet-known words the opened
+  // sentence has (null = not known), and sentences elsewhere on the page where
+  // this word is the only one left to learn (see Highlighter.sentencesWith).
+  sentencePick?: { currentOthers: number | null; suggestions: string[] };
 }
 
 export interface EditorResult {
@@ -56,6 +60,9 @@ export interface EditorHandlers {
     onProgress: (elapsedMs: number) => void,
   ): { promise: Promise<{ previewUrl: string }>; cancel: () => void };
   onRetakeFrame?(): Promise<string | null>;
+  // Switch the card to suggestion `index` (-1 = back to the original sentence);
+  // returns the new sentence text, or null if it's no longer available.
+  onPickSentence?(index: number): string | null;
   // Fired exactly once on EVERY close path (Save, Cancel, ✕, backdrop,
   // Escape) -- see CardEditor.close().
   onClose?(): void;
@@ -140,6 +147,20 @@ section { margin-bottom: 16px; }
   border: 1px solid var(--rule); border-radius: 4px; background: #fff; color: var(--ink);
   font: 16px/1.6 "Iowan Old Style", Georgia, "Times New Roman", serif; resize: vertical; min-height: 4.8em;
 }
+
+.pick { margin-top: 8px; font-size: 13px; }
+.pick-status { margin: 0 0 4px; color: var(--muted); }
+.pick-status.good { color: var(--ink); font-weight: 700; }
+.pick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.pick-list li { display: flex; align-items: baseline; gap: 8px; padding: 4px 6px; border-left: 2px solid var(--rule); }
+.pick-list li.chosen { border-left-color: var(--redpen); background: #F1F3F8; }
+.pick-text { flex: 1; font: 14px/1.5 "Iowan Old Style", Georgia, "Times New Roman", serif; }
+.pick button {
+  flex: none; font: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;
+  border: 1px solid #C9CFDA; border-radius: 999px; background: transparent; color: var(--ink);
+}
+.pick button:disabled { color: var(--muted); cursor: default; opacity: 0.5; }
+.pick-revert { margin-top: 6px; }
 
 .frame-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .frame-preview { width: 120px; height: 68px; object-fit: cover; border-radius: 4px; border: 1px solid var(--rule); background: #000; }
@@ -236,6 +257,11 @@ export class CardEditor {
           </div>
         </div>
         <textarea class="sentence-input"></textarea>
+        <div class="pick" hidden>
+          <p class="pick-status"></p>
+          <ul class="pick-list"></ul>
+          <button type="button" class="pick-revert" hidden>원래 문장으로</button>
+        </div>
       </section>
 
       <section class="capture-section" hidden>
@@ -332,6 +358,46 @@ export class CardEditor {
       });
     });
 
+    // One-unknown sentence picks. Choosing one replaces the sentence (and, on
+    // YouTube, the clip range) the same way the reader could by hand, and
+    // resets the expand/collapse buttons since the context is a new one.
+    const pick = data.sentencePick;
+    if (pick && (pick.currentOthers !== null || pick.suggestions.length)) {
+      const box = q(dialog, '.pick') as HTMLElement;
+      const status = q(dialog, '.pick-status');
+      const list = q(dialog, '.pick-list');
+      const revert = q(dialog, '.pick-revert') as HTMLButtonElement;
+      const ta = q(dialog, '.sentence-input') as HTMLTextAreaElement;
+      const original = pick.currentOthers === 0
+        ? '이 단어만 모르는 문장이에요. 카드로 쓰기 좋아요.'
+        : pick.currentOthers
+          ? `이 문장에는 모르는 단어가 ${pick.currentOthers}개 더 있어요.${pick.suggestions.length ? ' 이 단어만 모르는 문장:' : ''}`
+          : '이 단어만 모르는 문장:';
+      const choose = (i: number) => {
+        const text = handlers.onPickSentence?.(i);
+        if (text == null) return;
+        ta.value = text;
+        expandBtn.before.disabled = expandBtn.after.disabled = false;
+        collapseBtn.before.disabled = collapseBtn.after.disabled = true;
+        recalcRange();
+        [...list.children].forEach((li, j) => li.classList.toggle('chosen', j === i));
+        revert.hidden = i < 0;
+        status.textContent = i < 0 ? original : '이 단어만 모르는 문장으로 바꿨어요.';
+        status.classList.toggle('good', i >= 0 || pick.currentOthers === 0);
+      };
+      status.textContent = original;
+      status.classList.toggle('good', pick.currentOthers === 0);
+      pick.suggestions.forEach((text, i) => {
+        const li = el('li');
+        const use = el('button', { type: 'button' }, '이 문장 쓰기') as HTMLButtonElement;
+        use.addEventListener('click', () => choose(i));
+        li.append(el('span', { class: 'pick-text' }, text), use);
+        list.append(li);
+      });
+      revert.addEventListener('click', () => choose(-1));
+      box.hidden = false;
+    }
+
     if (data.youtubeCapture && handlers.onRecordAudio) {
       (q(dialog, '.capture-section') as HTMLElement).hidden = false;
       renderRange();
@@ -372,6 +438,7 @@ export class CardEditor {
         stopBtn.hidden = !active;
         progress.hidden = !active;
         dialog.querySelectorAll<HTMLButtonElement>('.clip-adjust').forEach((b) => { b.disabled = active; });
+        dialog.querySelectorAll<HTMLButtonElement>('.pick button').forEach((b) => { b.disabled = active; });
         (q(dialog, '.cancel') as HTMLButtonElement).disabled = active;
         (q(dialog, '.close') as HTMLButtonElement).disabled = active;
         (q(dialog, '.confirm') as HTMLButtonElement).disabled = active;

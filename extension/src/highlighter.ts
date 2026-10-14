@@ -19,6 +19,7 @@ const SKIP_TAGS = new Set([
 // same reasoning, own class since it's our markup, not YouTube's.
 const SKIP_CLASSES = new Set(['segment-timestamp', 'dokhack-yt-ts']);
 const HAS_LATIN = /[a-z]/i;
+const SENTENCES = new Intl.Segmenter('en', { granularity: 'sentence' });
 
 // A block's text is tokenized as one string (see Unit below) so POS/lemmas
 // stay accurate across inline tags ("I <b>really</b> like it" reads as one
@@ -139,6 +140,40 @@ export class Highlighter {
       s[statusOf(this.words, lemma)] += n;
     }
     return s;
+  }
+
+  /**
+   * Every sentence on the scanned page containing `lemma`, in document order,
+   * with how many *other* not-yet-known words (distinct lemmas: unknown, seen
+   * or learning) it holds -- `others === 0` is a sentence where this is the
+   * only word left to learn, the card editor's suggestion. `range` is that
+   * occurrence's own highlight Range. Capped, since it's only ever asked for
+   * a clicked word but a common one can occur hundreds of times.
+   */
+  sentencesWith(lemma: string, cap = 150): { range: Range; token: Token; sentence: string; others: number }[] {
+    const out: { range: Range; token: Token; sentence: string; others: number }[] = [];
+    const segs = new Map<object, { index: number; segment: string }[]>();
+    for (const range of this.byLemma.get(lemma) ?? []) {
+      if (out.length >= cap) break;
+      const unit = this.unitOf.get(range.startContainer as Text);
+      const entries = unit && this.entries.get(unit);
+      const nodes = unit && this.unitNodes.get(unit);
+      const entry = entries?.find((e) => e.range === range);
+      if (!unit || !entries || !nodes || !entry || !unit.isConnected) continue;
+      let list = segs.get(unit);
+      if (!list) segs.set(unit, (list = [...SENTENCES.segment(nodes.map((n) => n.data).join(''))]));
+      const seg = list.find((s) => entry.tok.start >= s.index && entry.tok.start < s.index + s.segment.length);
+      if (!seg) continue;
+      const end = seg.index + seg.segment.length;
+      const others = new Set<string>();
+      for (const e of entries) {
+        if (e.tok.start < seg.index || e.tok.start >= end || e.lemma === lemma) continue;
+        const s = statusOf(this.words, e.lemma);
+        if (s !== 'known' && s !== 'ignored') others.add(e.lemma);
+      }
+      out.push({ range, token: entry.tok, sentence: seg.segment.replace(/\s+/g, ' ').trim(), others: others.size });
+    }
+    return out.sort((a, b) => a.range.compareBoundaryPoints(Range.START_TO_START, b.range));
   }
 
   /** Paints (or clears, with `null`) a hover cue over the word under the pointer. */

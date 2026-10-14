@@ -21,6 +21,7 @@ let session = 0; // guards against late responses for a word you've moved past
 // openWord() call. sentenceCtx holds the full segmented sentence list around
 // it so the editor's "+ 앞/뒤 문장" buttons can pull in neighbors on demand.
 let currentToken: Token | null = null;
+let currentRange: Range | null = null;
 let currentSentence = '';
 let lastLookup: LookupResult | null = null;
 let lastKorean: KoreanCandidate[] = [];
@@ -249,6 +250,7 @@ function openWord(node: Text, token: Token, range: Range): void {
   const sentence = sentences[index] ?? token.surface;
 
   currentToken = token;
+  currentRange = range;
   currentSentence = sentence;
   lastLookup = null;
   lastKorean = [];
@@ -300,11 +302,53 @@ async function storeCapturedBlob(kind: 'audio' | 'frame', blob: Blob, replaceId:
   return id;
 }
 
+interface SentencePick {
+  token: Token;
+  sentence: string;
+  ctx: { list: string[]; index: number; youtube: boolean };
+}
+
+/**
+ * One-unknown sentence picks: other sentences on this page where the clicked
+ * word is the only one not yet known, nearest first (at most three), plus how
+ * many other unknown words the clicked sentence itself has. Only sentences of
+ * the same kind are offered -- a YouTube transcript line for a YouTube card
+ * (so its audio clip still lines up), page prose otherwise.
+ */
+function sentencePicks(lemma: string, clicked: Range | null, youtube: boolean): { currentOthers: number | null; picks: SentencePick[] } {
+  const all = highlighter?.sentencesWith(lemma) ?? [];
+  const at = clicked
+    ? all.findIndex((c) => c.range.startContainer === clicked.startContainer && c.range.startOffset === clicked.startOffset)
+    : -1;
+  const seen = new Set([currentSentence]);
+  const picks: SentencePick[] = [];
+  const near = all
+    .map((c, i) => ({ c, d: Math.abs(i - Math.max(at, 0)) }))
+    .filter(({ c }, i) => c.others === 0 && i !== at)
+    .sort((a, b) => a.d - b.d);
+  for (const { c } of near) {
+    if (picks.length >= 3) break;
+    const seg = segmentBlock(c.range);
+    const sentence = seg.sentences[seg.index];
+    if (seg.youtube !== youtube || !sentence || seen.has(sentence)) continue;
+    seen.add(sentence);
+    picks.push({ token: c.token, sentence, ctx: { list: seg.sentences, index: seg.index, youtube: seg.youtube } });
+  }
+  return { currentOthers: at >= 0 ? all[at].others : null, picks };
+}
+
 function openEditor(): void {
   if (!editor || !currentToken) return;
-  const token = currentToken;
+  // `token` is reassigned when the reader switches to a suggested sentence
+  // (its surface form there can differ: "ran" vs "running").
+  let token = currentToken;
   const ctx = sentenceCtx;
   popup?.close();
+
+  const { currentOthers, picks } = sentencePicks(token.lemma, currentRange, !!ctx?.youtube);
+  const original: SentencePick | null = ctx
+    ? { token, sentence: currentSentence, ctx: { list: ctx.list, index: ctx.index, youtube: ctx.youtube } }
+    : null;
 
   // Closure-local, not module state -- matches the existing "handlers
   // rebuilt fresh per open()" pattern below. Relies on CardEditor.close()
@@ -343,12 +387,21 @@ function openEditor(): void {
       dictionaryDefs: lastLookup?.definitions ?? [],
       koreanCandidates: lastKorean,
       youtubeCapture,
+      sentencePick: { currentOthers, suggestions: picks.map((p) => p.sentence) },
     },
     {
       onExpand: (dir) => expandSentence(dir),
       onCollapse: (dir) => collapseSentence(dir),
       onSpeak: () => speak(token.lemma),
       onCancel: () => editor?.close(),
+      onPickSentence: (i) => {
+        const p = i < 0 ? original : picks[i];
+        if (!p) return null;
+        token = p.token;
+        currentSentence = p.sentence;
+        sentenceCtx = { ...p.ctx, before: 0, after: 0 };
+        return p.sentence;
+      },
       onRangeRecalc: () => {
         if (!sentenceCtx?.youtube) return null;
         return timeRangeForLines(sentenceCtx.index - sentenceCtx.before, sentenceCtx.index + sentenceCtx.after);
