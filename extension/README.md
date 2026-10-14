@@ -20,22 +20,23 @@ After changing code, run the build again and click the reload icon on the extens
 
 | Action | How |
 | --- | --- |
-| Highlight a page's words | Toolbar icon → **이 페이지 스캔하기** (and **스캔 끄기** to stop). Nothing is highlighted until you do — pages stay untouched and fast. To scan every page automatically, turn on **페이지를 열 때마다 자동으로 스캔** (same popup, or 저장한 문장 보기 → 스캔 설정). |
+| Highlight a page's words | Toolbar icon → **이 페이지 스캔하기** (and **스캔 끄기** to stop). Nothing is highlighted until you do — pages stay untouched and fast. To scan every page automatically, turn on **페이지를 열 때마다 자동으로 스캔** (same popup, or 설정 → 스캔 설정). |
 | Look up a word | Click it. Inside links or buttons, use **Alt+click**. |
-| Set status | `1` 모름, `2` 봤어요, `3` 학습 중, `4` 알아요, or click the buttons. Opening an unknown word marks it 봤어요 automatically (switch off in 저장한 문장 보기 → 스캔 설정). |
+| Set status | `1` 모름, `2` 봤어요, `3` 학습 중, `4` 알아요, or click the buttons. Opening an unknown word marks it 봤어요 automatically (switch off in 설정 → 스캔 설정). |
 | See how much of a page you know | After **이 페이지 스캔하기**, the popup shows "이 페이지 단어의 N%를 알아요" with a bar. |
-| Pause after every subtitle line (YouTube) | Off by default. Turn on with the **줄마다 멈춤** chip on the transcript panel, or in 저장한 문장 보기 → 스캔 설정. |
-| Export to Anki with audio and screenshots | 저장한 문장 보기 → **Anki용 내보내기 (미디어 포함)** — a zip with an Anki text file plus the clips/frames and a README on where to copy them. |
-| Import words you already know | 저장한 문장 보기 → **단어 목록 가져오기** — paste or upload a word list, an Anki notes-as-text export, or any English text. |
+| Pause after every subtitle line (YouTube) | Off by default. Turn on with the **줄마다 멈춤** chip on the transcript panel, or in 설정 → 스캔 설정. |
+| Export to Anki with audio and screenshots | 설정 → **Anki용 내보내기 (미디어 포함)** — a zip with an Anki text file plus the clips/frames and a README on where to copy them. |
+| Import words you already know | 설정 → **단어 목록 가져오기** — paste or upload a word list, an Anki notes-as-text export, or any English text. |
 | Read pasted text (e.g. on a phone) | The website's **읽기** tab: paste English, tap words, mark them, make cards. |
 | Make a card | `S` or **카드 만들기** — opens an editor to pick which meanings to keep (Korean and/or English, filterable) and edit/expand the sentence before saving (also marks the word 학습 중) |
 | Close | `Esc` or click elsewhere |
 | Turn off on a site | Toolbar icon, then the switch |
-| See saved sentences / export to Anki | Toolbar icon, then **저장한 문장 보기** |
+| See saved sentences | The review website's **카드** tab (the extension's own card list was removed; the toolbar button now opens **설정**) |
+| Export to Anki / CSV | Toolbar icon → **설정** → **카드 내보내기** |
 | Seed known words | Review website → **시작하기 → 아는 단어 테스트** (`/placement`) — an opt-in placement test that bulk-marks common words you already know; the result reaches the extension through its content script (the options page just links there) |
-| Review with spaced repetition | 저장한 문장 보기 → **복습 웹사이트** — link an account (email code, no password) and your cards sync to [the companion review site](../web) for FSRS-scheduled review on any device |
-| Open the website (home, review, cards) | Toolbar icon → **웹사이트 열기** (a red badge shows how many cards are due today), or the **웹사이트 ↗** link on 저장한 문장 보기 |
-| Preview or edit a saved card | 저장한 문장 보기 → **미리보기** / **편집** next to a card — preview also plays a captured YouTube clip and shows its frame. Edits sync to the website (and website edits come back) on **모두 동기화** |
+| Review with spaced repetition | 설정 → **복습 웹사이트** — link an account (email code, no password) and your cards sync to [the companion review site](../web) for FSRS-scheduled review on any device |
+| Open the website (home, review, cards) | Toolbar icon → **웹사이트 열기** (a red badge shows how many cards are due today), or the **저장한 카드는 웹사이트에서 ↗** link on 설정 |
+| Preview or edit a saved card | The review website's **카드** tab — it plays a captured YouTube clip and shows its frame once uploaded. Website edits come back to the extension on **모두 동기화** |
 | Mine a YouTube video's captions | Opens automatically: a 독해크-styled transcript panel appears in the sidebar and a subtitle bar over the video, both plain-clickable (no Alt needed, unlike YouTube's own panel). Click the ▶ icon on any line to jump the video there. Falls back to Alt+click on YouTube's own **Show transcript** panel if the video has no captions to harvest, or the YouTube UI isn't in English. |
 
 The plain CSV export has four fields: Sentence (target word in `<b>`), Word, Meaning, and Source. In Anki's import dialog, tick **Allow HTML in fields**.

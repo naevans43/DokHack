@@ -2,58 +2,12 @@ main { max-width: 760px; margin: 0 auto; padding: 40px 24px 64px 56px; position:
 main::before { content: ""; position: absolute; top: 0; bottom: 0; left: 32px; width: 1.5px; background: var(--margin); }
 .top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 h1 { font-size: 28px; }
-.list { list-style: none; padding: 0; margin: 16px 0 0; }
-.item { padding: 14px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; }
-.sentence { margin: 0; font-size: 18px; line-height: 1.6; max-width: 62ch; }
-.sentence mark { background: var(--learning); color: inherit; padding: 0 1px; }
-.meta { grid-column: 1; margin: 0; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.meta .word { color: var(--ink); font-weight: 700; }
-.meta .gloss { color: var(--redpen); font-weight: 700; }
-.meta .def { color: var(--muted); }
-.meta a { color: var(--muted); max-width: 32ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.acts { grid-column: 2; grid-row: 1 / span 2; align-self: start; display: flex; gap: 6px; align-items: center; }
 .btn.sm { padding: 2px 9px; font-size: 13px; }
 a.btn { text-decoration: none; display: inline-block; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .del { border: 0; background: none; color: var(--muted); font-size: 13px; padding: 2px 4px; }
 .del:hover { color: var(--redpen); text-decoration: underline; }
-.meta .again { border-radius: 999px; padding: 0 8px; font-size: 11px; color: var(--ink); background: var(--learning); font-weight: 700; }
-.meta .clip { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; font-size: 11px; color: var(--ink); background: #fff; }
 
-.modal { position: fixed; inset: 0; z-index: 10; background: rgba(20, 22, 30, 0.45); display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
-.modal[hidden] { display: none; }
-.modal-card {
-  width: 480px; max-width: 100%; max-height: 100%; overflow-y: auto; padding: 22px 22px 20px 40px;
-  background: linear-gradient(to right, transparent 19px, var(--margin) 19px, var(--margin) 20.5px, transparent 20.5px), var(--paper);
-  border-radius: 8px; box-shadow: 0 20px 50px -16px rgba(29, 34, 48, 0.5);
-}
-.modal-card .tabs { display: flex; gap: 6px; margin-bottom: 12px; align-items: center; }
-.chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-.modal-card .sentence { font-size: 20px; max-width: none; }
-.modal-card .back { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); display: grid; gap: 6px; }
-.modal-card .back .def { color: var(--muted); font-size: 14px; }
-/* Browser speech for cards without a captured clip (tts.ts). */
-.tts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0; }
-.tts button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
-.tts-note { font-size: 12px; color: var(--muted); }
-.modal-card .back .gloss { color: var(--redpen); font-weight: 700; }
-/* Konglish / false-friend note on a card (konglish.ts). */
-.false-friend { display: block; padding: 4px 8px; border-left: 3px solid var(--redpen); background: #FDF1F3; color: var(--ink); font-size: 13px; font-weight: 400; }
-.modal-card .facts { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
-.modal-card .facts a { color: var(--muted); }
-.modal-card .frame { display: block; width: 100%; max-height: 220px; object-fit: contain; background: #000; border-radius: 4px; margin-top: 14px; }
-.modal-card audio { width: 100%; height: 36px; margin-top: 10px; }
-.modal-card .actions { display: flex; gap: 8px; margin-top: 16px; }
-.field-label { display: block; font-size: 12.5px; color: var(--muted); margin: 12px 0 4px; }
-.field-label:first-child { margin-top: 0; }
-.ta { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; font: 17px/1.6 "Iowan Old Style", Georgia, "Times New Roman", serif; resize: vertical; min-height: 5em; }
-.def-edit { display: flex; gap: 6px; margin-bottom: 6px; }
-.def-edit input { flex: 1; min-width: 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; font-size: 14px; }
-.def-edit input.ko { color: var(--redpen); font-weight: 700; }
-.form-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-.form-error { color: var(--redpen); font-size: 13px; margin: 8px 0 0; }
-.form-error[hidden] { display: none; }
-.empty { margin: 24px 0; max-width: 48ch; }
 .rewatch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .rewatch-list li { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--rule); padding: 6px 0; }
 .rewatch-list a { flex: 1; min-width: 0; overflow-wrap: anywhere; }

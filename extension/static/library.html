@@ -3,33 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DokHack 저장한 문장</title>
+  <title>DokHack 설정</title>
   <link rel="stylesheet" href="pages.css" />
   <link rel="stylesheet" href="library.css" />
 </head>
 <body>
   <main>
     <header class="top">
-      <h1>저장한 문장</h1>
+      <h1>설정</h1>
       <div class="top-actions">
-        <a class="btn" id="siteLink" href="#" target="_blank" rel="noreferrer">웹사이트 ↗</a>
-        <button class="btn" id="exportAnki" title="문장, 뜻, 오디오, 영상 화면을 Anki로 가져올 수 있는 zip">Anki용 내보내기 (미디어 포함)</button>
-        <button class="btn" id="export">CSV 내보내기</button>
+        <a class="btn" id="siteLink" href="#" target="_blank" rel="noreferrer">저장한 카드는 웹사이트에서 ↗</a>
       </div>
     </header>
-    <p class="muted" id="count"></p>
-    <ol id="list" class="list"></ol>
-    <p id="empty" class="empty" hidden>
-      아직 저장한 문장이 없습니다. 영어 글에서 단어를 클릭한 뒤 ‘문장 저장’을 누르면 여기에 모입니다.
-    </p>
-
-    <section class="test" id="rewatch">
-      <h2>다시 보기 좋은 영상</h2>
-      <p class="muted">자막 단어의 95% 이상을 알면서 1분 넘게 본 유튜브 영상이에요. 딱 좋은 난이도라 한 번 더 보면 좋아요. 이 목록은 이 기기에만 저장되고 동기화되지 않아요.</p>
-      <ol class="rewatch-list" id="rewatchList"></ol>
-      <p class="muted small" id="rewatchEmpty">아직 없어요. 유튜브에서 스캔한 채로 영상을 보면 여기에 모여요.</p>
-      <button class="btn" id="rewatchClear" hidden>목록 비우기</button>
-    </section>
 
     <section class="test" id="settings">
       <h2>스캔 설정</h2>
@@ -42,6 +27,24 @@
       <p class="muted small">기본은 꺼져 있어요. 대본 패널 위쪽의 ‘줄마다 멈춤’ 버튼으로도 켜고 끌 수 있어요.</p>
       <label class="check"><input type="checkbox" id="freqBadges" /> 모르는 단어에 빈도 표시하기</label>
       <p class="muted small">아주 자주 쓰이는 단어(상위 3,000개)에는 빨간 밑줄이 생겨요. 먼저 익히면 좋은 단어예요. 드문 단어에는 회색 점선 밑줄이 생겨요. 빈도 자료: OpenSubtitles 2018 자막 빈도 목록(hermitdave/FrequencyWords, CC BY-SA 4.0).</p>
+    </section>
+
+    <section class="test" id="rewatch">
+      <h2>다시 보기 좋은 영상</h2>
+      <p class="muted">자막 단어의 95% 이상을 알면서 1분 넘게 본 유튜브 영상이에요. 딱 좋은 난이도라 한 번 더 보면 좋아요. 이 목록은 이 기기에만 저장되고 동기화되지 않아요.</p>
+      <ol class="rewatch-list" id="rewatchList"></ol>
+      <p class="muted small" id="rewatchEmpty">아직 없어요. 유튜브에서 스캔한 채로 영상을 보면 여기에 모여요.</p>
+      <button class="btn" id="rewatchClear" hidden>목록 비우기</button>
+    </section>
+
+    <section class="test" id="exporting">
+      <h2>카드 내보내기</h2>
+      <p class="muted">이 기기에 저장된 카드를 파일로 내려받아요. 유튜브에서 캡처한 소리와 화면도 Anki용 zip에 함께 들어가요.</p>
+      <div class="row">
+        <button class="btn" id="exportAnki" title="문장, 뜻, 오디오, 영상 화면을 Anki로 가져올 수 있는 zip">Anki용 내보내기 (미디어 포함)</button>
+        <button class="btn" id="export">CSV 내보내기</button>
+      </div>
+      <p class="muted small" id="exportStatus" role="status"></p>
     </section>
 
     <section class="test" id="importer">
@@ -89,9 +92,6 @@
       </div>
     </section>
   </main>
-  <div id="modal" class="modal" hidden>
-    <div class="modal-card" id="modalCard" role="dialog" aria-modal="true" aria-label="카드"></div>
-  </div>
   <script src="library.js"></script>
 </body>
 </html>
