@@ -1,7 +1,9 @@
--- Run this once in your Supabase project's SQL editor.
--- See README.md for the full setup walkthrough.
+-- Run this in your Supabase project's SQL editor. See README.md for the full
+-- setup walkthrough. The whole file is safe to run again (every create is
+-- "if not exists", and each policy is dropped before it's re-created), so on an
+-- existing project you can simply run all of it to pick up newer blocks.
 
-create table cards (
+create table if not exists cards (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) default auth.uid(),
   lemma text not null,
@@ -32,11 +34,12 @@ create table cards (
 
 alter table cards enable row level security;
 
+drop policy if exists "own cards" on cards;
 create policy "own cards" on cards for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
-create index cards_due_idx on cards (user_id, due);
+create index if not exists cards_due_idx on cards (user_id, due);
 
 -- ---- Card media (audio clip + video frame) ----------------------------------
 -- Run this block in the SQL editor too. Already have a `cards` table from
@@ -51,13 +54,17 @@ insert into storage.buckets (id, name, public) values ('card-media', 'card-media
 
 -- Each user may only touch files under a folder named after their own user id
 -- ({user id}/{card id}/audio.webm), which is how the extension lays them out.
+drop policy if exists "own media read" on storage.objects;
 create policy "own media read" on storage.objects for select to authenticated
   using (bucket_id = 'card-media' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "own media insert" on storage.objects;
 create policy "own media insert" on storage.objects for insert to authenticated
   with check (bucket_id = 'card-media' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "own media update" on storage.objects;
 create policy "own media update" on storage.objects for update to authenticated
   using (bucket_id = 'card-media' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'card-media' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "own media delete" on storage.objects;
 create policy "own media delete" on storage.objects for delete to authenticated
   using (bucket_id = 'card-media' and (storage.foldername(name))[1] = auth.uid()::text);
 
@@ -103,9 +110,13 @@ alter table vocab enable row level security;
 alter table vocab_inbox enable row level security;
 alter table vocab_daily enable row level security;
 alter table review_log enable row level security;
+drop policy if exists "own vocab" on vocab;
 create policy "own vocab" on vocab for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "own vocab inbox" on vocab_inbox;
 create policy "own vocab inbox" on vocab_inbox for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "own vocab daily" on vocab_daily;
 create policy "own vocab daily" on vocab_daily for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "own review log" on review_log;
 create policy "own review log" on review_log for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ---- "Seen it again" counts ---------------------------------------------------
