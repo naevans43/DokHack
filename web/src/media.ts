@@ -1,14 +1,17 @@
+import { ttsButtons } from '../../extension/src/tts';
 import { mediaUrl, type CardRow } from './cards-api';
 
 /**
  * The card's video frame and audio clip (captured in the extension from a
- * YouTube transcript line), or null for a card without any. The files load
+ * YouTube transcript line). A card with no clip gets browser speech buttons
+ * instead (tts.ts); null only when there's neither. The files load
  * asynchronously -- they sit behind the reader's login -- so the elements
  * appear as they arrive, and a failure shows a short note instead of a broken
  * image or a dead player.
  */
-export function mediaBlock(c: Pick<CardRow, 'audio_path' | 'frame_path'>): HTMLElement | null {
-  if (!c.frame_path && !c.audio_path) return null;
+export function mediaBlock(c: Pick<CardRow, 'audio_path' | 'frame_path' | 'sentence' | 'lemma'>): HTMLElement | null {
+  const tts = c.audio_path ? null : ttsButtons(c.sentence, c.lemma);
+  if (!c.frame_path && !c.audio_path && !tts) return null;
   const box = document.createElement('div');
   box.className = 'media';
 
@@ -41,6 +44,7 @@ export function mediaBlock(c: Pick<CardRow, 'audio_path' | 'frame_path'>): HTMLE
       if (url) { audio.src = url; audio.hidden = false; } else fail();
     });
   }
+  if (tts) box.append(tts);
   box.append(note);
   return box;
 }

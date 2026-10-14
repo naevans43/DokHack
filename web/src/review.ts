@@ -1,5 +1,6 @@
 import { fsrs, generatorParameters, Rating, type Card, type Grade, type State } from 'ts-fsrs';
 import { definitionClass } from '../../extension/src/konglish';
+import { stopSpeaking } from '../../extension/src/tts';
 import { splitSentence, type CardRow } from './cards-api';
 import { mediaBlock } from './media';
 import { renderNav, requireSession } from './nav';
@@ -154,6 +155,7 @@ function fromCard(card: Card) {
 }
 
 function renderCurrent(): void {
+  stopSpeaking();
   const current = queue[0];
   // Done for today: the daily cap is reached, or the queue ran out after some reviewing.
   if (capReached(daily, today) || (!current && today.cards > 0)) return showDone();

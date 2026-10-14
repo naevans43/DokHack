@@ -1,4 +1,5 @@
 import { definitionClass, isFalseFriendNote } from '../../extension/src/konglish';
+import { stopSpeaking } from '../../extension/src/tts';
 import { mediaBlock } from './media';
 import {
   deleteCardRow, dueLabel, fetchAllCards, hostOf, isDue, isMastered, isNew, patchCard, splitSentence,
@@ -116,6 +117,7 @@ function closeDetail(): void {
 }
 
 function renderDetail(): void {
+  stopSpeaking();
   const c = cards.find((x) => x.id === selectedId);
   detailEmptyEl.hidden = !!c;
   pcardEl.hidden = !c;

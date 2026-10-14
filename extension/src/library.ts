@@ -3,6 +3,7 @@ import { getBlob } from './blobstore';
 import { REVIEW_SITE_URL } from './config';
 import { definitionClass } from './konglish';
 import { ask } from './messaging';
+import { stopSpeaking, ttsButtons } from './tts';
 import { getAccount, getCards, getEncounters, getSettings, saveSettings } from './storage';
 import type { EncounterMap, MinedCard } from './types';
 
@@ -83,6 +84,7 @@ const modalCard = document.getElementById('modalCard')!;
 let modalUrls: string[] = [];
 
 function closeModal(): void {
+  stopSpeaking();
   modal.hidden = true;
   modalCard.replaceChildren();
   modalUrls.forEach((u) => URL.revokeObjectURL(u));
@@ -163,6 +165,9 @@ async function previewView(card: MinedCard): Promise<Node[]> {
     audio.src = URL.createObjectURL(audioBlob.blob);
     modalUrls.push(audio.src);
     out.push(audio);
+  } else {
+    const tts = ttsButtons(card.sentence, card.lemma); // no captured clip: the browser's own voice
+    if (tts) out.push(tts);
   }
 
   const facts = node('p', 'facts');

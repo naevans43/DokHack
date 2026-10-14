@@ -3,6 +3,7 @@ import { CardEditor } from './editor';
 import { blockOf, Highlighter } from './highlighter';
 import { REVIEW_SITE_URL } from './config';
 import { ask } from './messaging';
+import { speakEnglish } from './tts';
 import { WordPopup } from './popup';
 import { DEFAULT_SETTINGS, getSettings, getWords, statusOf, type WordMap } from './storage';
 import type { KoreanCandidate, LookupResult, Settings, TabCommand, TabStatus, Token, WordStatus } from './types';
@@ -533,11 +534,7 @@ function setStatus(lemma: string, status: WordStatus): void {
 }
 
 function speak(word: string): void {
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word);
-  u.lang = 'en-US';
-  u.rate = 0.9;
-  speechSynthesis.speak(u);
+  speakEnglish(word);
 }
 
 // ---- sentence extraction ----------------------------------------------

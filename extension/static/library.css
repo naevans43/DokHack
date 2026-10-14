@@ -32,6 +32,10 @@ a.btn { text-decoration: none; display: inline-block; }
 .modal-card .sentence { font-size: 20px; max-width: none; }
 .modal-card .back { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); display: grid; gap: 6px; }
 .modal-card .back .def { color: var(--muted); font-size: 14px; }
+/* Browser speech for cards without a captured clip (tts.ts). */
+.tts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0; }
+.tts button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.tts-note { font-size: 12px; color: var(--muted); }
 .modal-card .back .gloss { color: var(--redpen); font-weight: 700; }
 /* Konglish / false-friend note on a card (konglish.ts). */
 .false-friend { display: block; padding: 4px 8px; border-left: 3px solid var(--redpen); background: #FDF1F3; color: var(--ink); font-size: 13px; font-weight: 400; }
