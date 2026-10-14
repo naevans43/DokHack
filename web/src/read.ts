@@ -1,5 +1,6 @@
 import { comprehensionOf, TARGET_PCT } from '../../extension/src/comprehension';
-import { FALSE_FRIEND_PREFIX, isFalseFriendNote, lookupFalseFriend } from '../../extension/src/konglish';
+import { lookupExpressions, type ExpressionNote } from '../../extension/src/expressions';
+import { COLLOCATION_PREFIX, FALSE_FRIEND_PREFIX, isUsageNote, lookupFalseFriend, SLANG_PREFIX } from '../../extension/src/konglish';
 import { lookupKorean } from '../../extension/src/krdict';
 import { tokenize } from '../../extension/src/nlp';
 import { lookupEnglish } from '../../extension/src/wordnet';
@@ -141,16 +142,17 @@ function renderStatusButtons(): void {
   );
 }
 
-function showCandidates(korean: KoreanCandidate[], english: LookupResult | null, falseFriend: string | null): void {
+function showCandidates(korean: KoreanCandidate[], english: LookupResult | null, falseFriend: string | null, expressions: ExpressionNote[]): void {
   const list = $('sheetDefs');
   list.replaceChildren();
   const rows: { text: string; lang: 'ko' | 'en'; checked: boolean }[] = [];
   if (falseFriend) rows.push({ text: FALSE_FRIEND_PREFIX + falseFriend, lang: 'ko', checked: true });
+  for (const x of expressions) rows.push({ text: (x.kind === 'slang' ? SLANG_PREFIX : COLLOCATION_PREFIX) + x.note, lang: 'ko', checked: true });
   korean.slice(0, 3).forEach((k, i) => rows.push({ text: k.ko, lang: 'ko', checked: i === 0 }));
   (english?.definitions ?? []).slice(0, 3).forEach((d, i) => rows.push({ text: `${POS_KO[d.pos] ?? d.pos}: ${d.text}`, lang: 'en', checked: i === 0 }));
   if (!rows.length) list.append(el('p', { class: 'muted' }, '사전에서 뜻을 찾지 못했어요.'));
   for (const r of rows) {
-    const label = el('label', { class: `def-row ${r.lang}${isFalseFriendNote(r.text) ? ' false-friend' : ''}` });
+    const label = el('label', { class: `def-row ${r.lang}${isUsageNote(r.text) ? ' false-friend' : ''}` });
     const box = el('input', { type: 'checkbox' }) as HTMLInputElement;
     box.checked = r.checked;
     box.dataset.lang = r.lang;
@@ -180,14 +182,15 @@ async function openWord(span: HTMLElement): Promise<void> {
   if (statusOf(token.lemma) === 'unknown') setStatus(token.lemma, 'seen').then(renderStatusButtons);
   renderStatusButtons();
 
-  const [korean, english, falseFriend] = await Promise.all([
+  const [korean, english, falseFriend, expressions] = await Promise.all([
     lookupKorean(token.lemma, sentence, token.pos).catch(() => [] as KoreanCandidate[]),
     lookupEnglish(token.lemma, sentence, token.pos).catch(() => null),
     lookupFalseFriend(token.surface, token.lemma).catch(() => null),
+    lookupExpressions(token.surface, sentence, token.lemma).catch(() => [] as ExpressionNote[]),
   ]);
   if (id !== openId) return; // moved on to another word
   $('sheetGloss').textContent = korean[0]?.ko ?? '';
-  showCandidates(korean, english, falseFriend);
+  showCandidates(korean, english, falseFriend, expressions);
 }
 
 async function saveCard(): Promise<void> {

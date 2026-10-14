@@ -1,0 +1,615 @@
+{
+  "slang": [
+    {
+      "forms": [
+        "lock in",
+        "locks in",
+        "locked in",
+        "locking in"
+      ],
+      "notBefore": [
+        "the",
+        "a",
+        "an",
+        "my",
+        "your",
+        "his",
+        "her",
+        "our",
+        "their",
+        "this",
+        "that",
+        "these",
+        "those",
+        "it",
+        "him",
+        "them",
+        "me",
+        "us",
+        "some",
+        "rates",
+        "prices"
+      ],
+      "note": "요즘 말로 '집중 모드에 들어가다, 제대로 몰입하다'예요(I need to lock in). 뒤에 목적어가 오면 원래 뜻 '가두다, (가격·조건을) 확정하다'예요.",
+      "merge": {
+        "phrase": "lock in"
+      }
+    },
+    {
+      "forms": [
+        "no cap"
+      ],
+      "notBefore": [
+        "on",
+        "for",
+        "of",
+        "to",
+        "in"
+      ],
+      "note": "요즘 말로 '진짜로, 거짓말 아니고'예요. cap은 '거짓말'이라는 뜻으로 써요."
+    },
+    {
+      "forms": [
+        "low-key",
+        "lowkey",
+        "low key"
+      ],
+      "note": "요즘 말로 '은근히, 살짝, 솔직히 말하면'이에요(I lowkey love it). 원래 뜻은 '조용한, 절제된'(a low-key wedding)이에요."
+    },
+    {
+      "forms": [
+        "high-key",
+        "highkey"
+      ],
+      "note": "요즘 말로 '대놓고, 완전'이에요. lowkey의 반대예요."
+    },
+    {
+      "forms": [
+        "hit different",
+        "hits different",
+        "hitting different"
+      ],
+      "note": "요즘 말로 '유난히 더 좋게(특별하게) 느껴지다'예요(This song hits different at night).",
+      "merge": {
+        "phrase": "hit different",
+        "en": "feel unusually good or special (slang)",
+        "nb": [
+          "NOUN",
+          "PROPN",
+          "ADJ",
+          "NUM"
+        ]
+      }
+    },
+    {
+      "forms": [
+        "touch grass",
+        "touches grass",
+        "touched grass",
+        "touching grass"
+      ],
+      "note": "요즘 말로 '인터넷 그만하고 밖에 나가서 현실을 좀 살아라'라는 놀리는 말이에요.",
+      "merge": {
+        "phrase": "touch grass",
+        "en": "go outside and reconnect with real life (slang)"
+      }
+    },
+    {
+      "forms": [
+        "it's giving",
+        "it is giving",
+        "its giving"
+      ],
+      "notBefore": [
+        "me",
+        "you",
+        "him",
+        "her",
+        "us",
+        "them",
+        "it",
+        "a",
+        "an",
+        "the",
+        "away",
+        "up",
+        "back",
+        "out"
+      ],
+      "note": "요즘 말로 '~ 느낌이다, ~ 분위기 난다'예요(It's giving main character). 뒤에 me/you 같은 말이 오면 원래 뜻 '주고 있다'예요."
+    },
+    {
+      "forms": [
+        "rizz",
+        "rizzed",
+        "rizzing"
+      ],
+      "note": "요즘 말로 '(이성을 끄는) 매력, 작업 능력'이에요. charisma에서 나온 말이에요."
+    },
+    {
+      "forms": [
+        "slay",
+        "slays",
+        "slayed",
+        "slaying"
+      ],
+      "note": "요즘 말로 '끝내주게 잘하다, 찢었다'예요(You slayed!). 원래 뜻은 '죽이다, 처치하다'(slay a dragon)예요."
+    },
+    {
+      "forms": [
+        "mid"
+      ],
+      "atClauseEnd": true,
+      "note": "요즘 말로 '그저 그런, 별로인'이에요(The movie was mid)."
+    },
+    {
+      "forms": [
+        "sus"
+      ],
+      "note": "요즘 말로 '수상한, 의심스러운'이에요. suspicious를 줄인 말이에요."
+    },
+    {
+      "forms": [
+        "that's cap",
+        "that is cap",
+        "is cap",
+        "so cap"
+      ],
+      "atClauseEnd": true,
+      "note": "요즘 말로 '그거 거짓말이야'예요. cap = 거짓말."
+    },
+    {
+      "forms": [
+        "bet"
+      ],
+      "standalone": true,
+      "note": "대답으로 쓰는 요즘 말 '좋아, 콜, 알겠어'예요."
+    },
+    {
+      "forms": [
+        "ghosted",
+        "ghosting",
+        "ghost me",
+        "ghost you",
+        "ghost him",
+        "ghost her",
+        "ghost them"
+      ],
+      "note": "요즘 말로 '연락을 갑자기 끊고 잠수 타다'예요(He ghosted me)."
+    },
+    {
+      "forms": [
+        "spill the tea",
+        "spills the tea",
+        "spilled the tea",
+        "spilt the tea",
+        "spilling the tea"
+      ],
+      "note": "요즘 말로 '소문이나 뒷얘기를 풀다'예요. tea는 '가십, 소식'이라는 뜻이에요.",
+      "merge": {
+        "phrase": "spill the tea",
+        "en": "share gossip (slang)"
+      }
+    },
+    {
+      "forms": [
+        "salty"
+      ],
+      "note": "요즘 말로 '(삐져서) 짜증 난, 뒤끝 있는'이라는 뜻도 있어요. 음식이면 원래 뜻 '짠'이에요."
+    },
+    {
+      "forms": [
+        "flex",
+        "flexing",
+        "flexed",
+        "weird flex"
+      ],
+      "note": "요즘 말로 '자랑하다, 과시하다'예요(weird flex but OK). 원래 뜻은 '(근육에) 힘을 주다, 구부리다'예요."
+    },
+    {
+      "forms": [
+        "deadass"
+      ],
+      "note": "요즘 말로 '진짜로, 진심으로'예요. 꽤 거친 말이에요."
+    },
+    {
+      "forms": [
+        "bussin",
+        "bussin'"
+      ],
+      "note": "요즘 말로 '(음식이) 진짜 맛있는'이에요."
+    },
+    {
+      "forms": [
+        "slaps"
+      ],
+      "atClauseEnd": true,
+      "note": "요즘 말로 '(노래 등이) 끝내준다'예요(This song slaps). 원래 뜻은 '손바닥으로 때리다'예요."
+    },
+    {
+      "forms": [
+        "understood the assignment",
+        "understand the assignment",
+        "understands the assignment"
+      ],
+      "note": "요즘 말로 '기대한 걸 제대로 해냈다, 딱 맞게 했다'예요. 칭찬하는 말이에요.",
+      "merge": {
+        "phrase": "understand the assignment",
+        "en": "do exactly what was expected, very well (slang)"
+      }
+    },
+    {
+      "forms": [
+        "rent free",
+        "rent-free"
+      ],
+      "note": "요즘 말로 '(머릿속을) 계속 떠나지 않는'이에요(living rent free in my head). 원래 뜻은 '집세 없이'예요."
+    },
+    {
+      "forms": [
+        "is lit",
+        "was lit",
+        "so lit",
+        "it's lit",
+        "that's lit"
+      ],
+      "atClauseEnd": true,
+      "note": "요즘 말로 '끝내주는, 엄청 신나는'이에요. 불이 켜졌다는 원래 뜻일 수도 있어요."
+    },
+    {
+      "forms": [
+        "say less"
+      ],
+      "note": "요즘 말로 '더 말 안 해도 돼, 바로 알겠어'예요. 그대로 '말을 줄이다'라는 뜻일 수도 있어요."
+    },
+    {
+      "forms": [
+        "my bad"
+      ],
+      "note": "가벼운 사과 '내 잘못이야, 미안'이에요."
+    },
+    {
+      "forms": [
+        "simp",
+        "simps",
+        "simping"
+      ],
+      "note": "요즘 말로 '좋아하는 사람에게 지나치게 잘해 주다, 그런 사람'이에요. 놀리는 말이에요."
+    },
+    {
+      "forms": [
+        "stan",
+        "stans",
+        "stanning"
+      ],
+      "note": "요즘 말로 '열성 팬(이다), 덕질하다'예요(I stan her)."
+    },
+    {
+      "forms": [
+        "the ick",
+        "an ick",
+        "gives me the ick"
+      ],
+      "note": "요즘 말로 '확 정 떨어지는 느낌'이에요."
+    },
+    {
+      "forms": [
+        "glow up",
+        "glow-up",
+        "glowed up",
+        "glowing up"
+      ],
+      "note": "요즘 말로 '(외모나 삶이) 확 좋아지다, 환골탈태'예요.",
+      "merge": {
+        "phrase": "glow up",
+        "en": "improve greatly in looks or life (slang)"
+      }
+    },
+    {
+      "forms": [
+        "vibe check"
+      ],
+      "note": "요즘 말로 '분위기(기분) 확인'이에요. vibe = 분위기, 느낌."
+    },
+    {
+      "forms": [
+        "main character energy"
+      ],
+      "note": "요즘 말로 '자기가 주인공인 것처럼 당당한 분위기'예요."
+    },
+    {
+      "forms": [
+        "it's a vibe",
+        "what a vibe"
+      ],
+      "note": "요즘 말로 '분위기 좋다, 딱 내 취향이다'예요."
+    }
+  ],
+  "collocations": [
+    {
+      "first": [
+        "make",
+        "makes",
+        "made",
+        "making"
+      ],
+      "second": [
+        "mistake",
+        "mistakes"
+      ],
+      "note": "'실수하다'는 make a mistake예요. do a mistake라고 하지 않아요."
+    },
+    {
+      "first": [
+        "make",
+        "makes",
+        "made",
+        "making"
+      ],
+      "second": [
+        "decision",
+        "decisions"
+      ],
+      "note": "'결정하다'는 make a decision이에요. do a decision이라고 하지 않아요."
+    },
+    {
+      "first": [
+        "take",
+        "takes",
+        "took",
+        "taken",
+        "taking"
+      ],
+      "second": [
+        "photo",
+        "photos",
+        "picture",
+        "pictures"
+      ],
+      "note": "'사진을 찍다'는 take a photo(picture)예요."
+    },
+    {
+      "first": [
+        "do",
+        "does",
+        "did",
+        "done",
+        "doing"
+      ],
+      "second": [
+        "homework"
+      ],
+      "note": "'숙제하다'는 do homework예요. make homework라고 하지 않아요. homework는 셀 수 없어서 a homework, homeworks도 쓰지 않아요."
+    },
+    {
+      "first": [
+        "take",
+        "takes",
+        "took",
+        "taken",
+        "taking"
+      ],
+      "second": [
+        "medicine",
+        "pill",
+        "pills",
+        "medication"
+      ],
+      "note": "'약을 먹다'는 take medicine이에요. eat medicine이라고 하지 않아요."
+    },
+    {
+      "first": [
+        "take",
+        "takes",
+        "took",
+        "taken",
+        "taking",
+        "have",
+        "has",
+        "had",
+        "having"
+      ],
+      "second": [
+        "shower",
+        "bath"
+      ],
+      "note": "'샤워하다'는 take(have) a shower예요. do a shower라고 하지 않아요."
+    },
+    {
+      "first": [
+        "take",
+        "takes",
+        "took",
+        "taken",
+        "taking"
+      ],
+      "second": [
+        "test",
+        "exam",
+        "class",
+        "course"
+      ],
+      "note": "'시험을 보다, 수업을 듣다'는 take a test, take a class예요. see a test, hear a class라고 하지 않아요."
+    },
+    {
+      "first": [
+        "catch",
+        "catches",
+        "caught",
+        "catching"
+      ],
+      "second": [
+        "cold"
+      ],
+      "note": "'감기에 걸리다'는 catch a cold예요."
+    },
+    {
+      "first": [
+        "have",
+        "has",
+        "had",
+        "having"
+      ],
+      "second": [
+        "dream",
+        "dreams",
+        "nightmare"
+      ],
+      "note": "'꿈을 꾸다'는 have a dream이에요. see a dream이라고 하지 않아요."
+    },
+    {
+      "first": [
+        "make",
+        "makes",
+        "made",
+        "making"
+      ],
+      "second": [
+        "friends"
+      ],
+      "note": "'친구를 사귀다'는 make friends예요."
+    },
+    {
+      "first": [
+        "pay",
+        "pays",
+        "paid",
+        "paying"
+      ],
+      "second": [
+        "attention"
+      ],
+      "note": "'주의를 기울이다, 집중하다'는 pay attention이에요."
+    },
+    {
+      "first": [
+        "make",
+        "makes",
+        "made",
+        "making"
+      ],
+      "second": [
+        "reservation",
+        "reservations"
+      ],
+      "note": "'예약하다'는 make a reservation이에요."
+    },
+    {
+      "first": [
+        "keep",
+        "keeps",
+        "kept",
+        "keeping",
+        "break",
+        "breaks",
+        "broke",
+        "broken",
+        "breaking"
+      ],
+      "second": [
+        "promise",
+        "promises"
+      ],
+      "note": "'약속을 지키다, 어기다'는 keep(break) a promise예요. protect a promise라고 하지 않아요. 만나는 약속은 promise가 아니라 plans, appointment예요."
+    },
+    {
+      "first": [
+        "heavy"
+      ],
+      "second": [
+        "rain",
+        "traffic",
+        "snow"
+      ],
+      "note": "'비가 많이 오다, 차가 많이 막히다'는 heavy rain, heavy traffic이에요. strong rain, many traffic이라고 하지 않아요."
+    },
+    {
+      "first": [
+        "strong"
+      ],
+      "second": [
+        "coffee",
+        "tea"
+      ],
+      "note": "'진한 커피'는 strong coffee예요. thick coffee라고 하지 않아요."
+    },
+    {
+      "first": [
+        "high",
+        "low"
+      ],
+      "second": [
+        "price",
+        "prices",
+        "salary",
+        "salaries"
+      ],
+      "note": "'가격, 월급이 비싸다(많다)'는 high price, high salary예요. expensive price라고 하지 않아요."
+    },
+    {
+      "first": [
+        "wear",
+        "wears",
+        "wore",
+        "worn",
+        "wearing"
+      ],
+      "second": [
+        "glasses",
+        "hat",
+        "mask",
+        "shoes",
+        "makeup",
+        "ring",
+        "watch"
+      ],
+      "note": "영어는 쓰다, 입다, 신다, 끼다를 모두 wear로 말해요(wear glasses, wear shoes)."
+    },
+    {
+      "first": [
+        "take",
+        "takes",
+        "took",
+        "taken",
+        "taking",
+        "go",
+        "goes",
+        "went",
+        "going"
+      ],
+      "second": [
+        "walk"
+      ],
+      "note": "'산책하다'는 take a walk, go for a walk예요."
+    },
+    {
+      "first": [
+        "get",
+        "gets",
+        "got",
+        "gotten",
+        "getting"
+      ],
+      "second": [
+        "bus",
+        "train",
+        "subway",
+        "plane",
+        "taxi"
+      ],
+      "note": "'버스를 타다, 내리다'는 get on(off) the bus예요. 택시나 차는 get in(out of)을 써요. ride the bus도 돼요."
+    },
+    {
+      "first": [
+        "make",
+        "makes",
+        "made",
+        "making"
+      ],
+      "second": [
+        "money"
+      ],
+      "note": "'돈을 벌다'는 make money(earn money)예요."
+    }
+  ]
+}

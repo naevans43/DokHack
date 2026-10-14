@@ -151,6 +151,7 @@ export class WordPopup {
       <div class="sub"><span class="form"></span><span class="freq"></span></div>
       <p class="gloss"></p>
       <p class="false-friend" hidden><strong>콩글리시 주의</strong><span></span></p>
+      <div class="expressions"></div>
       <ol class="defs"></ol>
       <div class="status" role="group" aria-label="단어 상태"></div>
       <div class="actions">
@@ -217,6 +218,12 @@ export class WordPopup {
     const ff = q(this.card, '.false-friend');
     ff.hidden = !r?.falseFriend;
     ff.lastElementChild!.textContent = r?.falseFriend ?? '';
+    // Slang / collocation notes (expressions.ts), same look as the false-friend box.
+    q(this.card, '.expressions').replaceChildren(...(r?.expressions ?? []).map((x) => {
+      const p = el('p', { class: 'false-friend' });
+      p.append(el('strong', {}, x.kind === 'slang' ? '요즘 표현' : '같이 쓰는 말'), x.note);
+      return p;
+    }));
     this.reposition();
   }
 

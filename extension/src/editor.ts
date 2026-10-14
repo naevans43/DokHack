@@ -1,4 +1,4 @@
-import { FALSE_FRIEND_PREFIX, isFalseFriendNote } from './konglish';
+import { COLLOCATION_PREFIX, FALSE_FRIEND_PREFIX, isUsageNote, SLANG_PREFIX } from './konglish';
 import type { CardDefinition, CardLanguage, KoreanCandidate } from './types';
 
 // The card-editing dialog: opens when you choose to save a sentence. Lets you
@@ -38,6 +38,8 @@ export interface EditorData {
   sentencePick?: { currentOthers: number | null; suggestions: string[] };
   // Konglish / false-friend note (konglish.ts), if the word is on that list.
   falseFriend?: string | null;
+  // Slang / collocation notes for the word in its sentence (expressions.ts).
+  expressions?: { kind: 'slang' | 'collocation'; note: string }[];
 }
 
 export interface EditorResult {
@@ -487,6 +489,7 @@ export class CardEditor {
     // the old AI gloss was); English dictionary defs start unchecked — pick
     // them in if you want more detail.
     this.setFalseFriend(data.falseFriend ?? null, false);
+    this.setExpressions(data.expressions ?? [], false);
     data.koreanCandidates.forEach((c, i) => this.upsertCandidate(`ko-${i}`, 'ko', c.ko, i === 0));
     data.dictionaryDefs.forEach((d, i) => {
       this.upsertCandidate(`dict-${i}`, 'en', `${POS_KO[d.pos] ?? d.pos}: ${d.text}`);
@@ -519,10 +522,22 @@ export class CardEditor {
     if (render) this.renderDefs();
   }
 
+  /** Slang/collocation notes go on the card by default too, right after a false-friend note. */
+  setExpressions(notes: { kind: 'slang' | 'collocation'; note: string }[], render = true): void {
+    if (!notes.length || this.candidates.some((c) => c.id.startsWith('ex-'))) return;
+    const at = this.candidates.findIndex((c) => !c.id.startsWith('ff-'));
+    const items = notes.map((n) => ({
+      id: `ex-${this.nextId++}`, lang: 'ko' as const, checked: true,
+      label: (n.kind === 'slang' ? SLANG_PREFIX : COLLOCATION_PREFIX) + n.note,
+    }));
+    this.candidates.splice(at < 0 ? this.candidates.length : at, 0, ...items);
+    if (render) this.renderDefs();
+  }
+
   /** Merge in Korean candidates that arrive after the dialog is already open. */
   setKoreanCandidates(candidates: KoreanCandidate[]): void {
     if (!this.dialog) return;
-    const hadNone = !this.candidates.some((c) => c.lang === 'ko' && !c.id.startsWith('ff-'));
+    const hadNone = !this.candidates.some((c) => c.lang === 'ko' && !c.id.startsWith('ff-') && !c.id.startsWith('ex-'));
     candidates.forEach((c, i) => this.upsertCandidate(`ko-${i}`, 'ko', c.ko, hadNone && i === 0));
     this.renderDefs();
   }
@@ -542,7 +557,7 @@ export class CardEditor {
       return;
     }
     for (const c of visible) {
-      const li = el('li', { class: isFalseFriendNote(c.label) ? 'def-item false-friend' : 'def-item', 'data-lang': c.lang });
+      const li = el('li', { class: isUsageNote(c.label) ? 'def-item false-friend' : 'def-item', 'data-lang': c.lang });
       const checkbox = el('input', { type: 'checkbox' }) as HTMLInputElement;
       checkbox.checked = c.checked;
       checkbox.addEventListener('change', () => { c.checked = checkbox.checked; });

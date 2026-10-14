@@ -297,7 +297,11 @@ function openWord(node: Text, token: Token, range: Range): void {
       if (id !== session) return;
       lastLookup = r;
       popup?.setLookup(r);
-      if (editor?.isOpen) { editor.setDictionaryDefs(r.definitions); editor.setFalseFriend(r.falseFriend ?? null); }
+      if (editor?.isOpen) {
+        editor.setDictionaryDefs(r.definitions);
+        editor.setFalseFriend(r.falseFriend ?? null);
+        editor.setExpressions(r.expressions ?? []);
+      }
     })
     .catch(() => id === session && popup?.setLookup(null));
 
@@ -414,6 +418,7 @@ function openEditor(): void {
       dictionaryDefs: lastLookup?.definitions ?? [],
       koreanCandidates: lastKorean,
       falseFriend: lastLookup?.falseFriend ?? null,
+      expressions: lastLookup?.expressions ?? [],
       youtubeCapture,
       sentencePick: { currentOthers, suggestions: picks.map((p) => p.sentence) },
     },

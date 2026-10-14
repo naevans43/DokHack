@@ -18,9 +18,19 @@ export function isFalseFriendNote(text: string): boolean {
   return text.startsWith(FALSE_FRIEND_PREFIX);
 }
 
-/** CSS class for showing a saved card definition: a false-friend note, a Korean gloss, or an English definition. */
+// Same mechanism for expressions.ts's slang/collocation notes.
+export const SLANG_PREFIX = '요즘 표현: ';
+export const COLLOCATION_PREFIX = '같이 쓰는 말: ';
+const NOTE_PREFIXES = [FALSE_FRIEND_PREFIX, SLANG_PREFIX, COLLOCATION_PREFIX];
+
+/** A saved definition that's one of the usage notes (false friend, slang, collocation) rather than a meaning. */
+export function isUsageNote(text: string): boolean {
+  return NOTE_PREFIXES.some((p) => text.startsWith(p));
+}
+
+/** CSS class for showing a saved card definition: a usage note, a Korean gloss, or an English definition. */
 export function definitionClass(d: { text: string; lang: 'ko' | 'en' }): 'false-friend' | 'gloss' | 'def' {
-  return isFalseFriendNote(d.text) ? 'false-friend' : d.lang === 'ko' ? 'gloss' : 'def';
+  return isUsageNote(d.text) ? 'false-friend' : d.lang === 'ko' ? 'gloss' : 'def';
 }
 
 let listPromise: Promise<Record<string, string>> | null = null;

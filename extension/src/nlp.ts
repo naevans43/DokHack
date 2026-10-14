@@ -18,7 +18,13 @@ const HAS_LETTER = /[a-z]/i;
 // there (longest first) and which class each is, so the merge check below
 // can require a compatible head POS per class. Lazily fetched once, same
 // pattern as krdict.ts/wordnet.ts's own JSON indexes.
-interface PhraseCandidate { words: string[]; pos: 'v' | 'r'; }
+// `nb`: parts of speech that may not directly follow for the merge to apply
+// (slang from static/expressions.json: "hit different" merges, "hit different
+// targets" -- literal -- doesn't).
+// `hp`: extra head parts of speech accepted -- wink-nlp tags slang verbs as
+// nouns more often than not ("This song hits/NOUN different", "Go touch/NOUN
+// grass"), which would otherwise never merge.
+interface PhraseCandidate { words: string[]; pos: 'v' | 'r'; nb?: string[]; hp?: string[]; }
 type PhraseIndex = Record<string, PhraseCandidate[]>;
 
 // A verb-phrase head ("give", "turn") needs to actually be used as a verb
@@ -98,7 +104,7 @@ function mergePhrasalVerbs(tokens: Token[], text: string, phrases: PhraseIndex):
   for (let i = 0; i < tokens.length; i++) {
     if (skip.has(i)) continue;
     const head = tokens[i];
-    const candidates = phrases[head.lemma]?.filter((c) => headMatchesClass(head.pos, c.pos));
+    const candidates = phrases[head.lemma]?.filter((c) => headMatchesClass(head.pos, c.pos) || c.hp?.includes(head.pos));
     const match = candidates && matchPhrase(tokens, i, candidates, text);
     if (match) {
       const last = tokens[i + match.words.length - 1];
@@ -131,7 +137,7 @@ function mergePhrasalVerbs(tokens: Token[], text: string, phrases: PhraseIndex):
 
 /** `candidates` is longest-first; returns the first (so longest) one that fully matches. */
 function matchPhrase(tokens: Token[], start: number, candidates: PhraseCandidate[], text: string): PhraseCandidate | null {
-  return candidates.find(({ words }) => {
+  return candidates.find(({ words, nb }) => {
     if (start + words.length > tokens.length) return false;
     for (let k = 1; k < words.length; k++) {
       const prev = tokens[start + k - 1];
@@ -139,6 +145,9 @@ function matchPhrase(tokens: Token[], start: number, candidates: PhraseCandidate
       if (cur.lemma !== words[k]) return false;
       if (!/^\s*$/.test(text.slice(prev.end, cur.start))) return false; // adjacent, no punctuation between
     }
+    const last = tokens[start + words.length - 1];
+    const next = tokens[start + words.length];
+    if (nb && next && /^\s*$/.test(text.slice(last.end, next.start)) && nb.includes(next.pos)) return false;
     return true;
   }) ?? null;
 }

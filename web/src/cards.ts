@@ -1,4 +1,4 @@
-import { definitionClass, isFalseFriendNote } from '../../extension/src/konglish';
+import { definitionClass, isUsageNote } from '../../extension/src/konglish';
 import { stopSpeaking } from '../../extension/src/tts';
 import { mediaBlock } from './media';
 import {
@@ -81,7 +81,7 @@ function row(c: CardRow): HTMLElement {
 
   const meta = el('div', { class: 'meta' });
   meta.append(el('b', {}, c.lemma));
-  const gloss = c.definitions.find((d) => d.lang === 'ko' && !isFalseFriendNote(d.text));
+  const gloss = c.definitions.find((d) => d.lang === 'ko' && !isUsageNote(d.text));
   if (gloss) meta.append(el('span', { class: 'gloss' }, gloss.text));
   meta.append(el('span', {}, dueLabel(c)));
 

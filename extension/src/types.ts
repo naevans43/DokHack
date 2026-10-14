@@ -111,6 +111,8 @@ export interface LookupResult {
   definitions: { pos: string; text: string }[];
   /** Konglish / false-friend note for this word (konglish.ts), if it's on the list. */
   falseFriend?: string | null;
+  /** Slang / collocation notes for the word in this sentence (expressions.ts). */
+  expressions?: { kind: 'slang' | 'collocation'; phrase: string; note: string }[];
 }
 
 // A Korean gloss candidate from the local KRDICT reverse index, ranked by

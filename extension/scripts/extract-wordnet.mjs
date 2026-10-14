@@ -71,6 +71,13 @@ import winkNLP from 'wink-nlp';
 import model from 'wink-eng-lite-web-model';
 import { CONNECTORS } from './connectors.mjs';
 
+// Verb-headed slang from the hand-written static/expressions.json (src/expressions.ts)
+// that should merge into one token like a phrasal verb ("hit different"). Each
+// may carry `nb`: parts of speech that must NOT follow for the merge to happen
+// ("hit different targets" is literal, not the slang), checked by nlp.ts; all
+// get `hp: ['NOUN']`, since the tagger usually calls these verbs nouns.
+const EXPRESSIONS = JSON.parse(readFileSync(new URL('../static/expressions.json', import.meta.url), 'utf8'));
+
 // Same tokenizer/lemmatizer as src/nlp.ts, so definition words here and the
 // sentence words compared against them at lookup time normalize the same way.
 const nlp = winkNLP(model, ['sbd', 'pos']);
@@ -202,6 +209,18 @@ for (const { phrase, en } of CONNECTORS) {
   if (index.has(lemmaPhrase)) continue;
   index.set(lemmaPhrase, [['adverb', 0, en, '']]);
   addPhrase(words, 'r');
+}
+
+for (const { merge } of EXPRESSIONS.slang) {
+  if (!merge) continue;
+  const words = merge.phrase.split(' ').map(lemmatizeWord);
+  const lemmaPhrase = words.join(' ');
+  if (!index.has(lemmaPhrase)) index.set(lemmaPhrase, [['verb', 0, merge.en, '']]);
+  const list = phrases.get(words[0]) ?? [];
+  let entry = list.find((c) => c.words.join(' ') === lemmaPhrase);
+  if (!entry) { addPhrase(words, 'v'); entry = phrases.get(words[0]).at(-1); }
+  if (merge.nb) entry.nb = merge.nb;
+  entry.hp = ['NOUN']; // wink-nlp tags slang verbs as nouns more often than not (see nlp.ts)
 }
 
 // Longest first, so src/nlp.ts's matcher tries "give the axe" before "give
