@@ -1,5 +1,11 @@
 name = "dokhack-review"
 compatibility_date = "2026-09-01"
+main = "worker/index.ts"
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+
+# Daily keep-alive query so the free Supabase project doesn't pause (see worker/index.ts).
+[triggers]
+crons = ["0 3 * * *"]
