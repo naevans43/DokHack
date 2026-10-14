@@ -1,4 +1,5 @@
 import { fsrs, generatorParameters, Rating, type Card, type Grade, type State } from 'ts-fsrs';
+import { definitionClass } from '../../extension/src/konglish';
 import { splitSentence, type CardRow } from './cards-api';
 import { mediaBlock } from './media';
 import { renderNav, requireSession } from './nav';
@@ -168,7 +169,7 @@ function renderCurrent(): void {
   const media = mediaBlock(current);
   mediaEl.replaceChildren(...(media ? [media] : []));
   defsEl.replaceChildren(
-    ...current.definitions.map((d) => el('li', { class: d.lang === 'ko' ? 'gloss' : 'def' }, d.text)),
+    ...current.definitions.map((d) => el('li', { class: definitionClass(d) }, d.text)),
   );
   defsEl.hidden = true;
   revealBtn.hidden = false;

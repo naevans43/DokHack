@@ -1,3 +1,4 @@
+import { definitionClass, isFalseFriendNote } from '../../extension/src/konglish';
 import { mediaBlock } from './media';
 import {
   deleteCardRow, dueLabel, fetchAllCards, hostOf, isDue, isMastered, isNew, patchCard, splitSentence,
@@ -77,7 +78,7 @@ function row(c: CardRow): HTMLElement {
 
   const meta = el('div', { class: 'meta' });
   meta.append(el('b', {}, c.lemma));
-  const gloss = c.definitions.find((d) => d.lang === 'ko');
+  const gloss = c.definitions.find((d) => d.lang === 'ko' && !isFalseFriendNote(d.text));
   if (gloss) meta.append(el('span', { class: 'gloss' }, gloss.text));
   meta.append(el('span', {}, dueLabel(c)));
 
@@ -137,7 +138,7 @@ function previewView(c: CardRow): Node[] {
   if (face === 'back') {
     const back = el('div', { class: 'back' });
     if (!c.definitions.length) back.append(el('span', { class: 'def' }, '저장한 뜻이 없어요.'));
-    for (const d of c.definitions) back.append(el('span', { class: d.lang === 'ko' ? 'gloss' : 'def' }, d.text));
+    for (const d of c.definitions) back.append(el('span', { class: definitionClass(d) }, d.text));
     out.push(back);
   }
 

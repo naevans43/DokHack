@@ -5,6 +5,7 @@ import { lookupKorean } from './krdict';
 import { tokenize } from './nlp';
 import { getAccount, getCards, getWords, type WordMap } from './storage';
 import type { AccountSession, MinedCard, Request } from './types';
+import { lookupFalseFriend } from './konglish';
 import { lookupEnglish } from './wordnet';
 import { FREQUENCY_BANDS } from './wordlist';
 
@@ -610,8 +611,13 @@ async function handle(req: Request): Promise<unknown> {
     case 'tokenize':
       // The NLP model (~3 MB) lives here, loaded once, instead of in every tab.
       return Promise.all(req.texts.map(tokenize));
-    case 'lookup':
-      return lookupEnglish(req.lemma, req.sentence, req.pos);
+    case 'lookup': {
+      const [english, falseFriend] = await Promise.all([
+        lookupEnglish(req.lemma, req.sentence, req.pos),
+        lookupFalseFriend(req.surface, req.lemma).catch(() => null),
+      ]);
+      return { ...english, falseFriend };
+    }
     case 'koreanGloss':
       return lookupKorean(req.lemma, req.sentence, req.pos);
     case 'setStatus':

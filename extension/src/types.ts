@@ -103,6 +103,8 @@ export interface AccountSession {
 export interface LookupResult {
   lemma: string;
   definitions: { pos: string; text: string }[];
+  /** Konglish / false-friend note for this word (konglish.ts), if it's on the list. */
+  falseFriend?: string | null;
 }
 
 // A Korean gloss candidate from the local KRDICT reverse index, ranked by
@@ -115,7 +117,7 @@ export interface KoreanCandidate {
 // Messages from content/pages to the background worker.
 export type Request =
   | { type: 'tokenize'; texts: string[] }
-  | { type: 'lookup'; lemma: string; sentence: string; pos: string }
+  | { type: 'lookup'; lemma: string; sentence: string; pos: string; surface?: string }
   | { type: 'koreanGloss'; lemma: string; sentence: string; pos: string }
   | { type: 'setStatus'; lemma: string; status: WordStatus }
   | { type: 'saveSettings'; patch: Partial<Settings> }

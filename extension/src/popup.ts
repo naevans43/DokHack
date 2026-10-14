@@ -74,6 +74,13 @@ const CSS = `
 }
 .gloss:empty { display: none; border: 0; padding: 0; margin: 0; }
 
+.false-friend {
+  margin: 10px 0 0; padding: 6px 8px; border-left: 3px solid var(--redpen); background: #FDF1F3;
+  font-size: 13px; line-height: 1.5; color: var(--ink);
+}
+.false-friend[hidden] { display: none; }
+.false-friend strong { color: var(--redpen); margin-right: 4px; }
+
 .defs { margin: 10px 0; padding: 0 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .defs li { margin: 2px 0; }
 .defs em { font-style: normal; color: var(--ink); margin-right: 4px; }
@@ -141,6 +148,7 @@ export class WordPopup {
       </div>
       <div class="sub"><span class="form"></span></div>
       <p class="gloss"></p>
+      <p class="false-friend" hidden><strong>콩글리시 주의</strong><span></span></p>
       <ol class="defs"></ol>
       <div class="status" role="group" aria-label="단어 상태"></div>
       <div class="actions">
@@ -199,6 +207,9 @@ export class WordPopup {
       list.append(li);
     }
     list.hidden = !list.childElementCount;
+    const ff = q(this.card, '.false-friend');
+    ff.hidden = !r?.falseFriend;
+    ff.lastElementChild!.textContent = r?.falseFriend ?? '';
     this.reposition();
   }
 

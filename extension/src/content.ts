@@ -265,12 +265,12 @@ function openWord(node: Text, token: Token, range: Range): void {
   // ever from "unknown", so it never overrides a status they chose.
   if (settings.autoSeen && statusOf(words, token.lemma) === 'unknown') setStatus(token.lemma, 'seen');
 
-  ask<LookupResult>({ type: 'lookup', lemma: token.lemma, sentence, pos: token.pos })
+  ask<LookupResult>({ type: 'lookup', lemma: token.lemma, sentence, pos: token.pos, surface: token.surface })
     .then((r) => {
       if (id !== session) return;
       lastLookup = r;
       popup?.setLookup(r);
-      if (editor?.isOpen) editor.setDictionaryDefs(r.definitions);
+      if (editor?.isOpen) { editor.setDictionaryDefs(r.definitions); editor.setFalseFriend(r.falseFriend ?? null); }
     })
     .catch(() => id === session && popup?.setLookup(null));
 
@@ -386,6 +386,7 @@ function openEditor(): void {
       sentence: currentSentence,
       dictionaryDefs: lastLookup?.definitions ?? [],
       koreanCandidates: lastKorean,
+      falseFriend: lastLookup?.falseFriend ?? null,
       youtubeCapture,
       sentencePick: { currentOthers, suggestions: picks.map((p) => p.sentence) },
     },

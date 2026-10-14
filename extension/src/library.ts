@@ -1,6 +1,7 @@
 import { buildAnkiExport } from './anki-export';
 import { getBlob } from './blobstore';
 import { REVIEW_SITE_URL } from './config';
+import { definitionClass } from './konglish';
 import { ask } from './messaging';
 import { getAccount, getCards, getSettings, saveSettings } from './storage';
 import type { MinedCard } from './types';
@@ -33,7 +34,7 @@ function item(card: MinedCard): HTMLElement {
   const meta = document.createElement('p');
   meta.className = 'meta';
   meta.append(span('word', card.lemma));
-  for (const d of card.definitions) meta.append(span(d.lang === 'ko' ? 'gloss' : 'def', d.text));
+  for (const d of card.definitions) meta.append(span(definitionClass(d), d.text));
   meta.append(span('', new Date(card.createdAt).toLocaleDateString('ko-KR')));
   const a = document.createElement('a');
   a.href = card.url;
@@ -127,7 +128,7 @@ async function previewView(card: MinedCard): Promise<Node[]> {
     if (face === 'back') {
       const back = node('div', 'back');
       if (!card.definitions.length) back.append(node('span', 'def', '저장한 뜻이 없어요.'));
-      for (const d of card.definitions) back.append(node('span', d.lang === 'ko' ? 'gloss' : 'def', d.text));
+      for (const d of card.definitions) back.append(node('span', definitionClass(d), d.text));
       body.append(back);
     }
     tabs.querySelectorAll('.chip').forEach((c, i) => c.classList.toggle('on', (i === 0) === (face === 'front')));

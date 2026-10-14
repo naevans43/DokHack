@@ -8,7 +8,7 @@ cpSync('static', 'dist', { recursive: true });
 // The paste-text reader (src/read.ts) reuses the extension's tokenizer and
 // dictionaries, which fetch these data files from the site root. They live in
 // the extension's static/ (build artifacts there); copy, don't duplicate.
-for (const f of ['krdict.json', 'wordnet.json', 'phrases.json']) cpSync(`../extension/static/${f}`, `dist/${f}`);
+for (const f of ['krdict.json', 'wordnet.json', 'phrases.json', 'konglish.json']) cpSync(`../extension/static/${f}`, `dist/${f}`);
 
 const options = {
   entryPoints: {

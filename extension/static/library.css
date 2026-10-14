@@ -32,6 +32,8 @@ a.btn { text-decoration: none; display: inline-block; }
 .modal-card .back { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); display: grid; gap: 6px; }
 .modal-card .back .def { color: var(--muted); font-size: 14px; }
 .modal-card .back .gloss { color: var(--redpen); font-weight: 700; }
+/* Konglish / false-friend note on a card (konglish.ts). */
+.false-friend { display: block; padding: 4px 8px; border-left: 3px solid var(--redpen); background: #FDF1F3; color: var(--ink); font-size: 13px; font-weight: 400; }
 .modal-card .facts { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
 .modal-card .facts a { color: var(--muted); }
 .modal-card .frame { display: block; width: 100%; max-height: 220px; object-fit: contain; background: #000; border-radius: 4px; margin-top: 14px; }
