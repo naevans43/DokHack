@@ -164,11 +164,12 @@ function wordAt(x: number, y: number): { node: Text; token: Token; range: Range 
   const caret = caretAt(x, y);
   if (!caret || caret.node.nodeType !== Node.TEXT_NODE || !highlighter) return null;
   const node = caret.node as Text;
-  const token = highlighter.tokenAt(node, caret.offset);
-  if (!token) return null;
-  const range = document.createRange();
-  range.setStart(node, token.start);
-  range.setEnd(node, token.end);
+  const found = highlighter.hitAt(node, caret.offset);
+  if (!found) return null;
+  // The highlighter's own Range: token offsets are block-flat, not node-local,
+  // so rebuilding a Range from them on `node` broke every word after inline markup.
+  const { token } = found;
+  const range = found.range.cloneRange();
   // caret APIs snap to the nearest character, even from far away —
   // make sure the pointer is actually on the word.
   const hit = [...range.getClientRects()].some(
@@ -244,7 +245,7 @@ function openWord(node: Text, token: Token, range: Range): void {
   if (!popup) return;
   pauseIfBarWord(node);
   const id = ++session;
-  const { sentences, index, youtube } = segmentBlock(node, token);
+  const { sentences, index, youtube } = segmentBlock(range);
   const sentence = sentences[index] ?? token.surface;
 
   currentToken = token;
@@ -496,15 +497,15 @@ function segmentTranscriptLines(block: Element): { sentences: string[]; index: n
  * data) or a plain page -- it's the sole signal openEditor() uses to decide
  * whether to show the audio/frame capture section at all (roadmap item 11).
  */
-function segmentBlock(node: Text, token: Token): { sentences: string[]; index: number; youtube: boolean } {
-  const block = blockOf(node);
+function segmentBlock(word: Range): { sentences: string[]; index: number; youtube: boolean } {
+  const block = blockOf(word.startContainer);
   const ytCtx = transcriptContextFor(block);
   if (ytCtx) return { ...ytCtx, youtube: true };
   if (block.tagName === TRANSCRIPT_SEGMENT_TAG) return { ...segmentTranscriptLines(block), youtube: false };
 
   const before = document.createRange();
   before.setStart(block, 0);
-  before.setEnd(node, token.start);
+  before.setEnd(word.startContainer, word.startOffset);
   let offset = before.toString().length;
   let text = block.textContent ?? '';
 

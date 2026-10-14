@@ -32,7 +32,7 @@ const MAX_UNIT_CHARS = 20_000;
 // or a single Text node when that block was too large (see MAX_UNIT_CHARS).
 type Unit = Element | Text;
 
-interface Entry { range: Range; lemma: string; }
+interface Entry { range: Range; lemma: string; tok: Token; }
 
 /** Nearest non-inline ancestor of `node` -- the "sentence container" a run of inline markup sits inside. */
 export function blockOf(node: Node): Element {
@@ -101,15 +101,22 @@ export class Highlighter {
     this.entries = new WeakMap();
   }
 
-  /** Token under a given text offset, if any. */
-  tokenAt(node: Text, offset: number): Token | undefined {
+  /**
+   * Token under a given text offset, if any, plus its real highlight Range.
+   * The token's start/end are offsets into the whole unit's flat text (not
+   * into `node`), so callers must use `range` for anything positional -- a
+   * word after inline markup ("I <b>really</b> like it") sits in a later text
+   * node, where the flat offsets don't fit.
+   */
+  hitAt(node: Text, offset: number): { token: Token; range: Range } | undefined {
     const unit = this.unitOf.get(node);
     const start = this.nodeFlatStart.get(node);
     if (!unit || start === undefined) return;
-    const toks = this.unitTokens.get(unit);
-    if (!toks) return;
+    const entries = this.entries.get(unit);
+    if (!entries) return;
     const flat = start + offset;
-    return toks.find((t) => flat >= t.start && flat < t.end) ?? toks.find((t) => flat === t.end);
+    const e = entries.find((x) => flat >= x.tok.start && flat < x.tok.end) ?? entries.find((x) => flat === x.tok.end);
+    return e && { token: e.tok, range: e.range };
   }
 
   /**
@@ -296,7 +303,7 @@ export class Highlighter {
       const range = document.createRange();
       range.setStart(from.node, from.offset);
       range.setEnd(to.node, to.offset);
-      entries.push({ range, lemma: t.lemma });
+      entries.push({ range, lemma: t.lemma, tok: t });
       let set = this.byLemma.get(t.lemma);
       if (!set) this.byLemma.set(t.lemma, (set = new Set()));
       set.add(range);
