@@ -32,6 +32,23 @@
     #ratings[hidden] { display: none; }
     .rating { padding: 10px 0; }
 
+    .daily-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -12px 0 20px; font-size: 13px; color: var(--muted); }
+    .daily-row label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); cursor: pointer; }
+    .daily-row input { accent-color: var(--ink); margin: 0; }
+    .daily-row select { font: inherit; padding: 1px 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--ink); }
+    .daily-row select:disabled { opacity: 0.5; }
+    #dailyProgress { font-weight: 700; color: var(--ink); font-size: 13px; }
+    #dailyProgress[hidden] { display: none; }
+
+    #done { text-align: center; padding: 40px 24px; border: 1px solid var(--line); border-radius: 8px;
+      background: linear-gradient(to right, transparent 17px, var(--margin) 17px, var(--margin) 18.5px, transparent 18.5px), var(--paper); }
+    #done[hidden] { display: none; }
+    #done h2 { font-size: 22px; margin-bottom: 8px; }
+    #done p { margin: 4px 0; }
+    #doneStreak { font-weight: 700; color: var(--redpen); }
+    #done .acts { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+    #done .acts [hidden] { display: none; }
+
     #empty { text-align: center; color: var(--muted); padding: 60px 0; }
     #empty[hidden] { display: none; }
     #card[hidden] { display: none; }
@@ -42,8 +59,23 @@
   <main class="review">
     <header>
       <h1>오늘의 복습</h1>
-      <span id="remaining" class="muted"></span>
+      <span><span id="dailyProgress" hidden></span> <span id="remaining" class="muted"></span></span>
     </header>
+    <div class="daily-row">
+      <label><input type="checkbox" id="dailyOn" /> 하루 조금씩</label>
+      <span><select id="dailyCards" aria-label="하루 카드 수"></select> 장 또는 <select id="dailyMinutes" aria-label="하루 복습 시간"></select> 분이면 끝</span>
+    </div>
+
+    <section id="done" hidden>
+      <h2 id="doneTitle">오늘은 여기까지</h2>
+      <p id="doneSummary" class="muted"></p>
+      <p id="doneStreak"></p>
+      <p id="doneNote" class="muted"></p>
+      <div class="acts">
+        <button class="btn" id="more" hidden>조금 더 하기</button>
+        <a class="btn primary" href="index.html">홈으로</a>
+      </div>
+    </section>
 
     <div id="card" hidden>
       <p id="sentence"></p>

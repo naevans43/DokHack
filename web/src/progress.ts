@@ -1,4 +1,5 @@
 import type { CardRow } from './cards-api';
+import { dayKey, forgivingStreak } from './daily';
 import { fetchReviewTimes, fetchVocabDaily, type VocabDay } from './stats-api';
 
 // The home page's 학습 현황: word counts, a growth line, and an activity
@@ -8,8 +9,6 @@ import { fetchReviewTimes, fetchVocabDaily, type VocabDay } from './stats-api';
 
 const WEEKS = 18;
 const DAY_MS = 86_400_000;
-
-const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 function el(tag: string, cls: string, text?: string): HTMLElement {
   const e = document.createElement(tag);
@@ -23,14 +22,6 @@ export function level(n: number): number {
   return n <= 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : 4;
 }
 
-/** Consecutive active days ending today (a day not over yet doesn't break a streak that ran through yesterday). */
-export function streak(active: Set<string>, today = new Date()): number {
-  let n = 0;
-  const d = new Date(today);
-  if (!active.has(dayKey(d))) d.setDate(d.getDate() - 1);
-  while (active.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
-  return n;
-}
 
 function vocabSection(days: VocabDay[]): HTMLElement {
   const box = el('section', 'progress-block');
@@ -98,8 +89,8 @@ function heatmapSection(activity: Map<string, number>): HTMLElement {
   }
   heat.setAttribute('aria-label', `최근 ${WEEKS}주의 활동`);
   box.append(heat);
-  const run = streak(active);
-  box.append(el('p', 'muted small', `최근 ${WEEKS}주 중 ${activeDays}일 활동했어요${run ? ` · 지금 ${run}일 연속` : ''}`));
+  const run = forgivingStreak(active).days;
+  box.append(el('p', 'muted small', `최근 ${WEEKS}주 중 ${activeDays}일 활동했어요.${run ? ` 지금 ${run}일째 이어가는 중이에요 (하루 쉬어도 이어져요).` : ''}`));
   return box;
 }
 

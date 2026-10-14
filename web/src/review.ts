@@ -2,7 +2,10 @@ import { fsrs, generatorParameters, Rating, type Card, type Grade, type State } 
 import { splitSentence, type CardRow } from './cards-api';
 import { mediaBlock } from './media';
 import { renderNav, requireSession } from './nav';
-import { logReview } from './stats-api';
+import {
+  capReached, CARD_CHOICES, dayKey, forgivingStreak, loadDaily, loadToday, MINUTE_CHOICES, saveDaily, saveToday,
+} from './daily';
+import { fetchCardTimes, fetchReviewTimes, logReview } from './stats-api';
 import { apiFetch } from './supabase';
 
 // The FSRS review queue. Card content (sentence/definitions) is mined in the
@@ -22,8 +25,96 @@ const defsEl = document.getElementById('defs')!;
 const mediaEl = document.getElementById('media')!;
 const revealBtn = document.getElementById('reveal') as HTMLButtonElement;
 const ratingsEl = document.getElementById('ratings')!;
+const doneEl = document.getElementById('done')!;
+const dailyProgressEl = document.getElementById('dailyProgress')!;
+const dailyOn = document.getElementById('dailyOn') as HTMLInputElement;
+const dailyCards = document.getElementById('dailyCards') as HTMLSelectElement;
+const dailyMinutes = document.getElementById('dailyMinutes') as HTMLSelectElement;
+const moreBtn = document.getElementById('more') as HTMLButtonElement;
 
 let queue: CardRow[] = [];
+let loaded = false;
+
+// ---- tiny daily mode + forgiving streak (daily.ts) ----------------------------
+const daily = loadDaily();
+let today = loadToday();
+const activeDays = new Set<string>(); // filled once review_log/cards answer; today is added on the first rating
+
+function minutesText(ms: number): string {
+  return ms < 60_000 ? '1분 미만' : `${Math.round(ms / 60_000)}분`;
+}
+
+function renderDailyProgress(): void {
+  dailyProgressEl.hidden = !daily.on;
+  const met = today.cards >= daily.cards || today.ms >= daily.minutes * 60_000;
+  dailyProgressEl.textContent = met
+    ? `오늘 목표 달성 (${today.cards}장)`
+    : `오늘 ${today.cards}/${daily.cards}장, ${Math.floor(today.ms / 60_000)}/${daily.minutes}분`;
+  dailyCards.disabled = dailyMinutes.disabled = !daily.on;
+}
+
+function showDone(): void {
+  cardEl.hidden = true;
+  emptyEl.hidden = true;
+  doneEl.hidden = false;
+  const capped = capReached(daily, today);
+  document.getElementById('doneTitle')!.textContent = capped ? '오늘은 여기까지 해도 충분해요' : '오늘 복습할 카드를 모두 끝냈어요';
+  document.getElementById('doneSummary')!.textContent = `오늘 카드 ${today.cards}장, ${minutesText(today.ms)} 복습했어요.`;
+  const run = forgivingStreak(activeDays).days;
+  document.getElementById('doneStreak')!.textContent = run ? `${run}일째 이어가는 중` : '';
+  document.getElementById('doneNote')!.textContent = run ? '하루 쉬어도 기록은 이어져요. 이틀 연속 쉬면 새로 시작해요.' : '';
+  moreBtn.hidden = !(capped && queue.length);
+  remainingEl.textContent = queue.length ? `${queue.length}개 남음` : '';
+}
+
+function initDailyControls(): void {
+  dailyCards.append(...CARD_CHOICES.map((n) => new Option(String(n), String(n), false, n === daily.cards)));
+  dailyMinutes.append(...MINUTE_CHOICES.map((n) => new Option(String(n), String(n), false, n === daily.minutes)));
+  dailyOn.checked = daily.on;
+  const onChange = () => {
+    daily.on = dailyOn.checked;
+    daily.cards = Number(dailyCards.value);
+    daily.minutes = Number(dailyMinutes.value);
+    saveDaily(daily);
+    renderDailyProgress();
+    if (loaded) renderCurrent();
+  };
+  dailyOn.addEventListener('change', onChange);
+  dailyCards.addEventListener('change', onChange);
+  dailyMinutes.addEventListener('change', onChange);
+  moreBtn.addEventListener('click', () => {
+    today.extra = true;
+    saveToday(today);
+    renderCurrent();
+  });
+  renderDailyProgress();
+
+  // Time only counts while a card is actually on screen and the tab is visible.
+  setInterval(() => {
+    if (today.day !== dayKey(new Date())) today = loadToday(); // past midnight: a fresh day
+    if (cardEl.hidden || document.visibilityState !== 'visible') return;
+    today.ms += 1000;
+    saveToday(today);
+    renderDailyProgress();
+  }, 1000);
+}
+
+async function loadActivity(): Promise<void> {
+  const since = new Date(Date.now() - 120 * 86_400_000).toISOString();
+  const [reviews, saved] = await Promise.all([fetchReviewTimes(since), fetchCardTimes(since)]);
+  const todayKey = dayKey(new Date());
+  let reviewedToday = 0;
+  for (const iso of reviews ?? []) {
+    const k = dayKey(new Date(iso));
+    activeDays.add(k);
+    if (k === todayKey) reviewedToday++;
+  }
+  for (const iso of saved ?? []) activeDays.add(dayKey(new Date(iso)));
+  // Reviews made on another device today count toward today's cap too.
+  if (reviewedToday > today.cards) { today.cards = reviewedToday; saveToday(today); }
+  renderDailyProgress();
+  if (loaded) renderCurrent();
+}
 
 function el(tag: string, attrs: Record<string, string> = {}, text?: string): HTMLElement {
   const e = document.createElement(tag);
@@ -62,6 +153,9 @@ function fromCard(card: Card) {
 
 function renderCurrent(): void {
   const current = queue[0];
+  // Done for today: the daily cap is reached, or the queue ran out after some reviewing.
+  if (capReached(daily, today) || (!current && today.cards > 0)) return showDone();
+  doneEl.hidden = true;
   emptyEl.hidden = !!current;
   cardEl.hidden = !current;
   remainingEl.textContent = queue.length ? `${queue.length}개 남음` : '';
@@ -86,6 +180,7 @@ async function loadQueue(): Promise<void> {
     `/rest/v1/cards?due=lte.${encodeURIComponent(new Date().toISOString())}&order=due.asc&limit=50`,
   );
   queue = (await res.json()) as CardRow[];
+  loaded = true;
   renderCurrent();
 }
 
@@ -106,6 +201,10 @@ async function rate(rating: Grade): Promise<void> {
     body: JSON.stringify(patch),
   });
   logReview(current.id, rating);
+  today.cards++;
+  saveToday(today);
+  activeDays.add(today.day);
+  renderDailyProgress();
   queue.shift();
   if (rating === Rating.Again) {
     queue.splice(Math.min(AGAIN_REQUEUE_DELAY, queue.length), 0, { ...current, ...patch });
@@ -131,4 +230,6 @@ for (const r of RATINGS) {
   ratingsEl.append(btn);
 }
 
+initDailyControls();
+loadActivity().catch(() => {});
 loadQueue();

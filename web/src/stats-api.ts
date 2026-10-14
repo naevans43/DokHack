@@ -38,6 +38,14 @@ export async function fetchReviewTimes(sinceIso: string): Promise<string[] | nul
   return rows ? rows.map((r) => r.reviewed_at) : null;
 }
 
+/** When each card was saved since a date (saving counts as a day's activity, as on the home page). */
+export async function fetchCardTimes(sinceIso: string): Promise<string[] | null> {
+  const rows = await getJson<{ created_at: string }[]>(
+    `/rest/v1/cards?select=created_at&created_at=gte.${encodeURIComponent(sinceIso)}&limit=5000`,
+  );
+  return rows ? rows.map((r) => r.created_at) : null;
+}
+
 /**
  * The reader's words: the extension's last uploaded map, with any marks made
  * here since then (still waiting in vocab_inbox) laid over it. Null if the
