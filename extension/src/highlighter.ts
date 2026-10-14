@@ -74,6 +74,7 @@ export class Highlighter {
   // Frequency badge (frequency.ts): an underline on a not-yet-studied word
   // that's very common or rare -- only while it's unknown or seen.
   private freqOf = new WeakMap<Range, 'common' | 'rare'>();
+  private rankOf = new WeakMap<Range, number>();
   private freqBadges = true;
   private queue = new Set<Unit>();
   private urgent = new Set<Unit>(); // see URGENT_CLASS
@@ -202,6 +203,32 @@ export class Highlighter {
       out.push({ range, token: entry.tok, sentence: seg.segment.replace(/\s+/g, ' ').trim(), others: others.size });
     }
     return out.sort((a, b) => a.range.compareBoundaryPoints(Range.START_TO_START, b.range));
+  }
+
+  /**
+   * Pre-watch list (youtube.ts): the not-yet-known words that occur most often
+   * inside `within`, ties broken by general frequency rank (frequency.ts) --
+   * the words most worth knowing before watching. Merged phrases included.
+   */
+  topUnknown(within: Node, n: number): { lemma: string; count: number; first: Range }[] {
+    const out: { lemma: string; count: number; rank: number; first: Range }[] = [];
+    for (const [lemma, ranges] of this.byLemma) {
+      const s = statusOf(this.words, lemma);
+      if (s !== 'unknown' && s !== 'seen') continue;
+      let count = 0;
+      let first: Range | null = null;
+      let rank = Infinity;
+      for (const r of ranges) {
+        if (!within.contains(r.startContainer)) continue;
+        count++;
+        if (!first || r.compareBoundaryPoints(Range.START_TO_START, first) < 0) first = r;
+        const t = this.rankOf.get(r);
+        if (t !== undefined) rank = Math.min(rank, t);
+      }
+      if (count && first) out.push({ lemma, count, rank, first });
+    }
+    return out.sort((a, b) => b.count - a.count || a.rank - b.rank).slice(0, n)
+      .map(({ lemma, count, first }) => ({ lemma, count, first }));
   }
 
   /** Every lemma with at least one highlighted occurrence on the page right now. */
@@ -414,6 +441,7 @@ export class Highlighter {
       range.setEnd(to.node, to.offset);
       entries.push({ range, lemma: t.lemma, tok: t });
       if (t.freq) this.freqOf.set(range, t.freq);
+      if (t.rank !== undefined) this.rankOf.set(range, t.rank);
       let set = this.byLemma.get(t.lemma);
       if (!set) this.byLemma.set(t.lemma, (set = new Set()));
       set.add(range);

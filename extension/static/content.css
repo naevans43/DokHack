@@ -45,6 +45,18 @@ dokhack-popup { all: initial; }
   padding: 1px 10px; font-size: 12px; cursor: pointer;
 }
 .dokhack-yt-chip-on { background: #1D2230; color: #fff; border-color: #1D2230; }
+/* Pre-watch word list (youtube.ts): the transcript's most frequent unknown words. */
+.dokhack-yt-prewatch { padding: 8px 12px 10px; border-bottom: 1px solid #D5E3F3; background: #F7F9FC; }
+.dokhack-yt-prewatch[hidden] { display: none; }
+.dokhack-yt-prewatch-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; color: #697083; margin-bottom: 4px; }
+.dokhack-yt-prewatch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.dokhack-yt-prewatch-list li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.dokhack-yt-prewatch-word { border: none; background: none; padding: 0; cursor: pointer; color: #1D2230; font: 600 15px "Iowan Old Style", Georgia, serif; text-decoration: underline dotted #C9CFDA; }
+.dokhack-yt-prewatch-gloss { color: #C8102E; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dokhack-yt-prewatch-count { color: #697083; font-size: 12px; }
+.dokhack-yt-prewatch-acts { display: inline-flex; gap: 4px; }
+.dokhack-yt-prewatch-done .dokhack-yt-prewatch-word { color: #697083; text-decoration: none; }
+.dokhack-yt-prewatch-mark { font-size: 12px; color: #697083; }
 /* Comprehension meter (comprehension.ts): green-ish only inside the 95% target band. */
 .dokhack-yt-meter {
   border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 700;

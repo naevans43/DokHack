@@ -310,12 +310,80 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 // reader knows (comprehension.ts; 95% is the target band). Counted by
 // content.ts's Highlighter over our own transcript list only -- the rest of a
 // YouTube page (titles, comments) would swamp it otherwise.
-let statsFor: ((root: Node) => PageStats) | null = null;
+/** What content.ts lends this file: the Highlighter's counts and a way to open the word card. */
+export interface YouTubeHooks {
+  stats(root: Node): PageStats;
+  topUnknown(root: Node, n: number): { lemma: string; count: number; first: Range }[];
+  openAt(range: Range): void;
+}
+let hooks: YouTubeHooks | null = null;
+const statsFor = (root: Node) => hooks?.stats(root) ?? null;
 let meterEl: HTMLElement | null = null;
 
 /** This video's transcript word counts, or undefined before a transcript is built. */
 export function videoStats(): PageStats | undefined {
-  return listEl && statsFor ? statsFor(listEl) : undefined;
+  return (listEl && statsFor(listEl)) || undefined;
+}
+
+// ---- pre-watch word list -----------------------------------------------------
+// Before (or as) the video plays: the few not-yet-known words that come up most
+// in its transcript, most frequent first (general frequency breaks ties), each
+// with its best Korean gloss and one-click 알아요 / 학습 중. Clicking the word
+// opens the normal word card on its first line, where 카드 만들기 is. Built
+// once per video, after the transcript list has finished highlighting (its
+// word count stopped changing), and kept as is so marked words show as done
+// instead of the list reshuffling under the reader's cursor.
+const PREWATCH_WORDS = 5;
+let prewatchEl: HTMLElement | null = null;
+let prewatchShown = false;
+let lastTotal = -1;
+let stableTicks = 0;
+
+function updatePrewatch(): void {
+  if (prewatchShown || !prewatchEl || !listEl || !hooks) return;
+  const total = hooks.stats(listEl).total;
+  stableTicks = total > 0 && total === lastTotal ? stableTicks + 1 : 0;
+  lastTotal = total;
+  if (stableTicks < 2) return; // highlighting arrives in batches; wait for two quiet seconds
+  prewatchShown = true;
+  const words = hooks.topUnknown(listEl, PREWATCH_WORDS);
+  if (!words.length) return;
+
+  const head = el('div', { class: 'dokhack-yt-prewatch-head' });
+  head.append(el('span', {}, '이 영상에서 자주 나오는 모르는 단어'));
+  const close = el('button', { type: 'button', class: 'dokhack-yt-icon-btn', 'aria-label': '닫기' }, '✕') as HTMLButtonElement;
+  close.addEventListener('click', () => { if (prewatchEl) prewatchEl.hidden = true; });
+  head.append(close);
+  const list = el('ul', { class: 'dokhack-yt-prewatch-list' });
+  for (const w of words) {
+    const li = el('li');
+    const word = el('button', { type: 'button', class: 'dokhack-yt-prewatch-word', title: '단어 카드 열기' }, w.lemma) as HTMLButtonElement;
+    word.addEventListener('click', () => {
+      // Bring its first line into view without tripping "현재 자막으로 이동".
+      suppressScrollUntil = Date.now() + 600;
+      w.first.startContainer.parentElement?.scrollIntoView({ block: 'center' });
+      hooks?.openAt(w.first);
+    });
+    const gloss = el('span', { class: 'dokhack-yt-prewatch-gloss' }, '');
+    const line = w.first.startContainer.parentElement?.closest('.dokhack-yt-line-text')?.textContent ?? '';
+    ask<{ ko: string }[]>({ type: 'koreanGloss', lemma: w.lemma, sentence: line, pos: '' })
+      .then((c) => { gloss.textContent = c[0]?.ko ?? ''; }).catch(() => {});
+    const count = el('span', { class: 'dokhack-yt-prewatch-count' }, `${w.count}번`);
+    const acts = el('span', { class: 'dokhack-yt-prewatch-acts' });
+    for (const [status, label] of [['known', '알아요'], ['learning', '학습 중']] as const) {
+      const b = el('button', { type: 'button', class: 'dokhack-yt-chip' }, label) as HTMLButtonElement;
+      b.addEventListener('click', () => {
+        ask({ type: 'setStatus', lemma: w.lemma, status }).catch(() => {});
+        li.classList.add('dokhack-yt-prewatch-done');
+        acts.replaceChildren(el('span', { class: 'dokhack-yt-prewatch-mark' }, status === 'known' ? '알아요로 표시했어요' : '학습 중으로 표시했어요'));
+      });
+      acts.append(b);
+    }
+    li.append(word, gloss, count, acts);
+    list.append(li);
+  }
+  prewatchEl.replaceChildren(head, list);
+  prewatchEl.hidden = false;
 }
 
 function updateMeter(): void {
@@ -328,9 +396,9 @@ function updateMeter(): void {
   meterEl.title = `이 영상 자막 단어의 ${c.pct}%를 알아요. ${c.label} (목표 ${TARGET_PCT}% 이상)`;
 }
 
-export function initYouTubeExtras(stats: (root: Node) => PageStats): void {
+export function initYouTubeExtras(h: YouTubeHooks): void {
   if (location.hostname !== 'www.youtube.com') return;
-  statsFor = stats;
+  hooks = h;
   // YouTube is a single-page app -- switching videos never reloads the
   // page, so 'yt-navigate-finish' is the intended way to notice a new video
   // loaded. Confirmed live, though, that it doesn't always fire -- reliably
@@ -345,7 +413,7 @@ export function initYouTubeExtras(stats: (root: Node) => PageStats): void {
   // running alongside it rather than replacing it (the event, when it does
   // fire, reacts immediately; the poll is only a backstop).
   document.addEventListener('yt-navigate-finish', checkNavigation);
-  pollTimer = setInterval(() => { checkNavigation(); updateMeter(); }, 1000);
+  pollTimer = setInterval(() => { checkNavigation(); updateMeter(); updatePrewatch(); }, 1000);
   checkNavigation();
 }
 
@@ -387,6 +455,10 @@ function teardown(): void {
   pausedBoundary = -1;
   pauseChip = null;
   meterEl = null;
+  prewatchEl = null;
+  prewatchShown = false;
+  lastTotal = -1;
+  stableTicks = 0;
   video = null;
   panelEl?.remove();
   barEl?.remove();
@@ -681,6 +753,8 @@ function buildPanel(): void {
   header.append(el('span', { class: 'dokhack-yt-header-actions' }, ''));
   (header.lastChild as HTMLElement).append(meterEl, pauseChip, toggleBtn);
   panelEl.append(header);
+  prewatchEl = el('div', { class: 'dokhack-yt-prewatch', hidden: '' });
+  panelEl.append(prewatchEl);
 
   listEl = el('div', { class: 'dokhack-yt-panel-list' });
   listEl.addEventListener('scroll', onListScroll);

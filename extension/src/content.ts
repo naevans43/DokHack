@@ -101,7 +101,16 @@ function enable(): void {
   document.addEventListener('mousemove', onMouseMove, true);
   document.addEventListener('mouseleave', onMouseLeave);
   encounterTimer = setInterval(reportEncounters, ENCOUNTER_REPORT_MS);
-  initYouTubeExtras((root) => highlighter?.stats(root) ?? { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 });
+  initYouTubeExtras({
+    stats: (root) => highlighter?.stats(root) ?? { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 },
+    topUnknown: (root, n) => highlighter?.topUnknown(root, n) ?? [],
+    openAt: (range) => {
+      // A fresh hit-test: the Range is the highlighter's own, so its start is a real word start.
+      const node = range.startContainer as Text;
+      const hit = highlighter?.hitAt(node, range.startOffset);
+      if (hit) openWord(node, hit.token, hit.range.cloneRange());
+    },
+  });
 }
 
 function disable(): void {
