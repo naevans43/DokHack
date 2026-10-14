@@ -63,6 +63,8 @@ dokhack-popup { all: initial; }
   background: #CFE1FF; color: #1D2230; cursor: default;
 }
 .dokhack-yt-meter[hidden] { display: none; }
+.dokhack-yt-cue { color: #697083; font-style: italic; }
+.dokhack-yt-bar-text .dokhack-yt-cue { color: #C9CFDA; }
 .dokhack-yt-meter[data-band="hard"] { background: #F1B9C0; }
 .dokhack-yt-meter[data-band="stretch"] { background: #FFE872; }
 .dokhack-yt-meter[data-band="target"] { background: #CDEBD3; }

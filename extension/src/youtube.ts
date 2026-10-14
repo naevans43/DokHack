@@ -313,7 +313,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 /** What content.ts lends this file: the Highlighter's counts and a way to open the word card. */
 export interface YouTubeHooks {
   stats(root: Node): PageStats;
-  topUnknown(root: Node, n: number): { lemma: string; count: number; first: Range }[];
+  topUnknown(root: Node, n: number, minRank?: number): { lemma: string; count: number; first: Range }[];
   openAt(range: Range): void;
 }
 let hooks: YouTubeHooks | null = null;
@@ -334,6 +334,10 @@ export function videoStats(): PageStats | undefined {
 // word count stopped changing), and kept as is so marked words show as done
 // instead of the list reshuffling under the reader's cursor.
 const PREWATCH_WORDS = 5;
+// Seen live on a profile with few words marked 알아요: the list was "the, and,
+// a, be, of" (with glosses like "ㅏ"). The most frequent words in English are
+// never what a reader needs flagged before a video, so they're skipped.
+const PREWATCH_SKIP_RANK = 200;
 let prewatchEl: HTMLElement | null = null;
 let prewatchShown = false;
 let lastTotal = -1;
@@ -346,7 +350,7 @@ function updatePrewatch(): void {
   lastTotal = total;
   if (stableTicks < 2) return; // highlighting arrives in batches; wait for two quiet seconds
   prewatchShown = true;
-  const words = hooks.topUnknown(listEl, PREWATCH_WORDS);
+  const words = hooks.topUnknown(listEl, PREWATCH_WORDS, PREWATCH_SKIP_RANK);
   if (!words.length) return;
 
   const head = el('div', { class: 'dokhack-yt-prewatch-head' });
@@ -785,7 +789,8 @@ function buildPanel(): void {
 
   lines.forEach((line, i) => {
     const row = el('div', { class: 'dokhack-yt-line' });
-    const lineText = el('div', { class: 'dokhack-yt-line-text' }, line.text);
+    const lineText = el('div', { class: 'dokhack-yt-line-text' });
+    renderLineText(lineText, line.text);
     lineIndexOf.set(lineText, i);
     row.append(lineText);
 
@@ -813,6 +818,23 @@ function buildPanel(): void {
   panelEl.append(jumpBtn);
 
   secondary.prepend(panelEl);
+}
+
+// Caption sound cues ("[music]", "[Applause]", "(Laughter)") go in their own
+// span, excluded from highlighting and counts (highlighter.ts's SKIP_CLASSES);
+// the line's text is otherwise unchanged.
+const CUE = /\[[^\]]*\]|\([A-Z][a-z]+\)/g;
+
+function renderLineText(target: HTMLElement, text: string): void {
+  const parts: Node[] = [];
+  let at = 0;
+  for (const m of text.matchAll(CUE)) {
+    if (m.index! > at) parts.push(document.createTextNode(text.slice(at, m.index)));
+    parts.push(el('span', { class: 'dokhack-yt-cue' }, m[0]));
+    at = m.index! + m[0].length;
+  }
+  if (at < text.length) parts.push(document.createTextNode(text.slice(at)));
+  target.replaceChildren(...parts);
 }
 
 function onToggleCollapse(): void {
@@ -868,7 +890,7 @@ function onTimeUpdate(): void {
 
   if (barTextEl && barEl) {
     const text = currentIndex >= 0 ? lines[currentIndex].text : '';
-    if (barTextEl.textContent !== text) barTextEl.textContent = text;
+    if (barTextEl.textContent !== text) renderLineText(barTextEl, text);
     barEl.style.display = text ? '' : 'none';
     if (currentIndex >= 0) lineIndexOf.set(barTextEl, currentIndex);
   }

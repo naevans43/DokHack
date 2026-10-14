@@ -104,7 +104,7 @@ function enable(): void {
   encounterTimer = setInterval(reportEncounters, ENCOUNTER_REPORT_MS);
   initYouTubeExtras({
     stats: (root) => highlighter?.stats(root) ?? { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 },
-    topUnknown: (root, n) => highlighter?.topUnknown(root, n) ?? [],
+    topUnknown: (root, n, minRank) => highlighter?.topUnknown(root, n, minRank) ?? [],
     openAt: (range) => {
       // A fresh hit-test: the Range is the highlighter's own, so its start is a real word start.
       const node = range.startContainer as Text;

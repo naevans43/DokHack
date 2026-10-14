@@ -17,7 +17,9 @@ const SKIP_TAGS = new Set([
 // Not real sentence content either way, so exclude it like SKIP_TAGS.
 // dokhack-yt-ts is our own transcript panel's timestamp badge (youtube.ts) --
 // same reasoning, own class since it's our markup, not YouTube's.
-const SKIP_CLASSES = new Set(['segment-timestamp', 'dokhack-yt-ts']);
+// dokhack-yt-cue: caption sound cues in our own transcript/bar ("[music]",
+// "(Laughter)"), which aren't speech and shouldn't count as vocabulary.
+const SKIP_CLASSES = new Set(['segment-timestamp', 'dokhack-yt-ts', 'dokhack-yt-cue']);
 // YouTube keeps every engagement panel (its own transcript -- 600+ segments
 // for a talk -- comments, chapters...) in the DOM while it's closed. Tokenizing
 // a closed one is pure waste and, worse, floods the queue right when the
@@ -210,7 +212,7 @@ export class Highlighter {
    * inside `within`, ties broken by general frequency rank (frequency.ts) --
    * the words most worth knowing before watching. Merged phrases included.
    */
-  topUnknown(within: Node, n: number): { lemma: string; count: number; first: Range }[] {
+  topUnknown(within: Node, n: number, minRank = 0): { lemma: string; count: number; first: Range }[] {
     const out: { lemma: string; count: number; rank: number; first: Range }[] = [];
     for (const [lemma, ranges] of this.byLemma) {
       const s = statusOf(this.words, lemma);
@@ -225,7 +227,7 @@ export class Highlighter {
         const t = this.rankOf.get(r);
         if (t !== undefined) rank = Math.min(rank, t);
       }
-      if (count && first) out.push({ lemma, count, rank, first });
+      if (count && first && !(rank <= minRank)) out.push({ lemma, count, rank, first }); // minRank: skip "the", "and"...
     }
     return out.sort((a, b) => b.count - a.count || a.rank - b.rank).slice(0, n)
       .map(({ lemma, count, first }) => ({ lemma, count, first }));
