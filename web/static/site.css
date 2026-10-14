@@ -35,6 +35,8 @@
 
 .hl, mark { background: var(--learning); color: inherit; padding: 0 1px; }
 .gloss { color: var(--redpen); font-weight: 700; }
+/* "Seen it again" chip (stats-api.ts's seenAgainChip). */
+.again { display: inline-block; margin: 8px 0; border-radius: 999px; padding: 0 10px; font-size: 12px; font-weight: 700; background: var(--learning); color: var(--ink); }
 /* Konglish / false-friend note on a card (../extension/src/konglish.ts). */
 .false-friend { display: block; padding: 4px 8px; border-left: 3px solid var(--redpen); background: #FDF1F3; color: var(--ink); font-size: 13px; font-weight: 400; line-height: 1.5; }
 .chip { border: 1px solid var(--line); border-radius: 999px; background: #fff; padding: 3px 12px; font-size: 13px; }

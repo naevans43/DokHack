@@ -47,6 +47,26 @@ export async function fetchCardTimes(sinceIso: string): Promise<string[] | null>
 }
 
 /**
+ * "Seen it again" counts (lemma -> how many pages/videos it turned up on while
+ * 학습 중), uploaded by the extension. Null if the column/table doesn't exist.
+ */
+export async function fetchEncounters(): Promise<Record<string, number> | null> {
+  const rows = await getJson<{ encounters: Record<string, number> | null }[]>('/rest/v1/vocab?select=encounters&limit=1');
+  return rows ? (rows[0]?.encounters ?? {}) : null;
+}
+
+/** "다시 만남 N번" chip for a card's word, or null when it hasn't come up again. */
+export function seenAgainChip(encounters: Record<string, number> | null, lemma: string): HTMLElement | null {
+  const n = encounters?.[lemma] ?? 0;
+  if (!n) return null;
+  const chip = document.createElement('span');
+  chip.className = 'again';
+  chip.textContent = `다시 만남 ${n}번`;
+  chip.title = '학습 중인 이 단어를 다른 글이나 영상에서 다시 만난 횟수';
+  return chip;
+}
+
+/**
  * The reader's words: the extension's last uploaded map, with any marks made
  * here since then (still waiting in vocab_inbox) laid over it. Null if the
  * tables don't exist; an empty map if the extension has never synced.

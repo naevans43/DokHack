@@ -17,6 +17,7 @@ a.btn { text-decoration: none; display: inline-block; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .del { border: 0; background: none; color: var(--muted); font-size: 13px; padding: 2px 4px; }
 .del:hover { color: var(--redpen); text-decoration: underline; }
+.meta .again { border-radius: 999px; padding: 0 8px; font-size: 11px; color: var(--ink); background: var(--learning); font-weight: 700; }
 .meta .clip { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; font-size: 11px; color: var(--ink); background: #fff; }
 
 .modal { position: fixed; inset: 0; z-index: 10; background: rgba(20, 22, 30, 0.45); display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }

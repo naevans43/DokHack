@@ -5,6 +5,7 @@ import {
   type CardDefinition, type CardRow,
 } from './cards-api';
 import { renderNav, requireSession } from './nav';
+import { fetchEncounters, seenAgainChip } from './stats-api';
 
 type Filter = 'all' | 'due' | 'new' | 'mastered';
 const FILTERS: { id: Filter; label: string; test: (c: CardRow) => boolean }[] = [
@@ -18,6 +19,7 @@ let cards: CardRow[] = [];
 let filter: Filter = 'all';
 let query = '';
 let selectedId: string | null = null;
+let encounters: Record<string, number> | null = null;
 let mode: 'preview' | 'edit' = 'preview';
 let face: 'front' | 'back' = 'front';
 
@@ -133,6 +135,8 @@ function previewView(c: CardRow): Node[] {
   tabs.append(close);
 
   const out: Node[] = [tabs, sentenceNode(c, 'sentence')];
+  const again = seenAgainChip(encounters, c.lemma);
+  if (again) out.push(again);
   const media = mediaBlock(c);
   if (media) out.push(media);
   if (face === 'back') {
@@ -258,6 +262,7 @@ async function removeCard(c: CardRow): Promise<void> {
 async function main(): Promise<void> {
   renderNav('cards');
   searchEl.addEventListener('input', () => { query = searchEl.value; renderList(); });
+  fetchEncounters().then((e) => { encounters = e; if (selectedId) renderDetail(); }).catch(() => {});
   try {
     cards = await fetchAllCards();
   } catch {

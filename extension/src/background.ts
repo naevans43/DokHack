@@ -1,11 +1,11 @@
 import { base64ToBytes, bytesToBase64 } from './binary';
 import { deleteBlob, getBlob, putBlob } from './blobstore';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from './config';
+import { lookupFalseFriend } from './konglish';
 import { lookupKorean } from './krdict';
 import { tokenize } from './nlp';
-import { getAccount, getCards, getWords, type WordMap } from './storage';
-import type { AccountSession, MinedCard, Request } from './types';
-import { lookupFalseFriend } from './konglish';
+import { getAccount, getCards, getEncounters, getWords, type WordMap } from './storage';
+import type { AccountSession, EncounterMap, MinedCard, Request } from './types';
 import { lookupEnglish } from './wordnet';
 import { FREQUENCY_BANDS } from './wordlist';
 
@@ -200,11 +200,50 @@ async function restFetch(session: AccountSession, path: string, init: RequestIni
 const VALID_MARKS = new Set(['seen', 'learning', 'known', 'ignored']);
 
 /** Cheap content signature (FNV-1a over the JSON), so an unchanged word map isn't re-uploaded. */
-function signature(words: object): string {
+function signature(words: unknown): string {
   const text = JSON.stringify(words);
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
   return `${text.length}:${h >>> 0}`;
+}
+
+// ---- "seen it again" counter -------------------------------------------------
+// content.ts reports the 학습 중 words present on a scanned page, once per page.
+// One encounter = one page/video, so rereading or reloading the same page never
+// counts twice (a short hash of the page is remembered per word, not the URL),
+// and the page a word's card was mined from doesn't count at all. Counts only
+// grow while the word is 학습 중; they're kept after it moves on.
+
+const ENCOUNTER_PAGES_KEPT = 40;
+
+/** A page's identity for counting: the URL without its #fragment, hashed (so browsing history isn't stored). */
+function pageKey(url: string): string {
+  return signature(url.split('#')[0]);
+}
+
+async function recordEncounters(lemmas: string[], url: string): Promise<number> {
+  const page = pageKey(url);
+  return serial(async () => {
+    const [words, cards, encounters] = await Promise.all([getWords(), getCards(), getEncounters()]);
+    let counted = 0;
+    for (const lemma of new Set(lemmas)) {
+      if (words[lemma] !== 'learning') continue;
+      if (cards.some((c) => c.lemma === lemma && pageKey(c.url) === page)) continue; // its own source page
+      const e = encounters[lemma] ?? { n: 0, p: [] };
+      if (e.p.includes(page)) continue;
+      encounters[lemma] = { n: e.n + 1, p: [page, ...e.p].slice(0, ENCOUNTER_PAGES_KEPT) };
+      counted++;
+    }
+    if (counted) await chrome.storage.local.set({ encounters });
+    return counted;
+  });
+}
+
+/** Lemma -> count, the only part that leaves the device. */
+function encounterCounts(encounters: EncounterMap): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [lemma, e] of Object.entries(encounters)) if (e.n > 0) out[lemma] = e.n;
+  return out;
 }
 
 async function syncVocab(session: AccountSession): Promise<void> {
@@ -248,15 +287,30 @@ async function syncVocab(session: AccountSession): Promise<void> {
       else console.warn('[dokhack] vocab upload failed', res.status);
     }
 
+    // 2b. "Seen it again" counts, a separate column (schema.sql's third block) --
+    // its own request so a database without that column still syncs words.
+    const counts = encounterCounts(await getEncounters());
+    const encSig = signature(counts);
+    const { encountersSig } = await chrome.storage.local.get('encountersSig');
+    if (encSig !== encountersSig) {
+      const res = await restFetch(session, `/rest/v1/vocab?user_id=eq.${uid}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ encounters: counts }),
+      });
+      if (res.ok) await chrome.storage.local.set({ encountersSig: encSig });
+      else console.warn('[dokhack] encounter upload failed (is the encounters column in schema.sql applied?)', res.status);
+    }
+
     // 3. Today's counts, for the growth chart (one row per day; later syncs the same day overwrite it).
-    const counts = { known: 0, seen: 0, learning: 0 };
-    for (const s of Object.values(words)) if (s in counts) counts[s as keyof typeof counts]++;
+    const daily = { known: 0, seen: 0, learning: 0 };
+    for (const s of Object.values(words)) if (s in daily) daily[s as keyof typeof daily]++;
     const d = new Date();
     const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     await restFetch(session, '/rest/v1/vocab_daily?on_conflict=user_id,day', {
       method: 'POST',
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({ user_id: uid, day, ...counts }),
+      body: JSON.stringify({ user_id: uid, day, ...daily }),
     });
   } catch (err) {
     console.warn('[dokhack] vocab sync failed', err);
@@ -620,6 +674,8 @@ async function handle(req: Request): Promise<unknown> {
     }
     case 'koreanGloss':
       return lookupKorean(req.lemma, req.sentence, req.pos);
+    case 'encounter':
+      return recordEncounters(req.lemmas.filter((l) => typeof l === 'string').slice(0, 500), String(req.url));
     case 'setStatus':
       return serial(async () => {
         const words = await getWords();

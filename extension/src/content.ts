@@ -97,6 +97,7 @@ function enable(): void {
   document.addEventListener('pointerdown', onPointerDown, true);
   document.addEventListener('mousemove', onMouseMove, true);
   document.addEventListener('mouseleave', onMouseLeave);
+  encounterTimer = setInterval(reportEncounters, ENCOUNTER_REPORT_MS);
   initYouTubeExtras((root) => highlighter?.stats(root) ?? { total: 0, known: 0, seen: 0, learning: 0, unknown: 0, ignored: 0 });
 }
 
@@ -114,6 +115,29 @@ function disable(): void {
   document.removeEventListener('mousemove', onMouseMove, true);
   document.removeEventListener('mouseleave', onMouseLeave);
   disableYouTubeExtras();
+  clearInterval(encounterTimer);
+}
+
+// ---- "seen it again" ------------------------------------------------------
+// While a page is scanned, every few seconds tell the background which 학습 중
+// words are on it that haven't been reported for this page yet (text keeps
+// arriving -- infinite scroll, YouTube's transcript). The background turns
+// that into at most one encounter per word per page (background.ts's
+// recordEncounters()).
+
+const ENCOUNTER_REPORT_MS = 5000;
+let encounterTimer: ReturnType<typeof setInterval> | undefined;
+let reportedUrl = '';
+let reported = new Set<string>();
+
+function reportEncounters(): void {
+  if (!highlighter) return;
+  const url = location.href.split('#')[0];
+  if (url !== reportedUrl) { reportedUrl = url; reported = new Set(); } // YouTube: a new video, same document
+  const fresh = highlighter.presentLemmas().filter((l) => words[l] === 'learning' && !reported.has(l));
+  if (!fresh.length) return;
+  fresh.forEach((l) => reported.add(l));
+  ask({ type: 'encounter', lemmas: fresh, url }).catch(() => {});
 }
 
 // ---- hover cue ----------------------------------------------------------

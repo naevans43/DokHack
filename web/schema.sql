@@ -107,3 +107,11 @@ create policy "own vocab" on vocab for all using (auth.uid() = user_id) with che
 create policy "own vocab inbox" on vocab_inbox for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "own vocab daily" on vocab_daily for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "own review log" on review_log for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ---- "Seen it again" counts ---------------------------------------------------
+-- Run this block in the SQL editor too (after the vocabulary block above; safe
+-- to run more than once). Until it's run, the extension's 모두 동기화 just
+-- skips uploading the counts (the words still sync) and the website shows no
+-- "다시 만남" chip. Holds only lemma -> count; the pages a word was seen on
+-- never leave the extension (it keeps short hashes of them locally).
+alter table vocab add column if not exists encounters jsonb not null default '{}';

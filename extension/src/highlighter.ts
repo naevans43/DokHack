@@ -176,6 +176,11 @@ export class Highlighter {
     return out.sort((a, b) => a.range.compareBoundaryPoints(Range.START_TO_START, b.range));
   }
 
+  /** Every lemma with at least one highlighted occurrence on the page right now. */
+  presentLemmas(): string[] {
+    return [...this.byLemma].filter(([, ranges]) => ranges.size > 0).map(([lemma]) => lemma);
+  }
+
   /** Paints (or clears, with `null`) a hover cue over the word under the pointer. */
   setHover(range: Range | null): void {
     this.hl.hover.clear();

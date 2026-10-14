@@ -145,6 +145,18 @@ export type Request =
   // review website when the card has been synced.
   | { type: 'updateCard'; id: string; sentence: string; targetStart: number; definitions: CardDefinition[] }
   // Cards due on the review website right now (null = not linked/unreachable).
-  | { type: 'dueCount' };
+  | { type: 'dueCount' }
+  // "Seen it again": 학습 중 words that appear on the page being read (content.ts
+  // reports each once per page); the background counts one encounter per page.
+  | { type: 'encounter'; lemmas: string[]; url: string };
+
+/**
+ * "Seen it again" counter, keyed by lemma: how many different pages/videos a
+ * word turned up on while it was 학습 중 (not counting the page its card came
+ * from). `p` holds short hashes of the recent pages already counted -- never
+ * the URLs themselves -- so a reload or a revisit doesn't count twice. Only
+ * the counts are synced (vocab.encounters on the website).
+ */
+export type EncounterMap = Record<string, { n: number; p: string[] }>;
 
 export type Response<T> = { ok: true; data: T } | { ok: false; error: string };

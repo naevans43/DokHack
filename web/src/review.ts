@@ -6,7 +6,7 @@ import { renderNav, requireSession } from './nav';
 import {
   capReached, CARD_CHOICES, dayKey, forgivingStreak, loadDaily, loadToday, MINUTE_CHOICES, saveDaily, saveToday,
 } from './daily';
-import { fetchCardTimes, fetchReviewTimes, logReview } from './stats-api';
+import { fetchCardTimes, fetchEncounters, fetchReviewTimes, logReview, seenAgainChip } from './stats-api';
 import { apiFetch } from './supabase';
 
 // The FSRS review queue. Card content (sentence/definitions) is mined in the
@@ -35,6 +35,7 @@ const moreBtn = document.getElementById('more') as HTMLButtonElement;
 
 let queue: CardRow[] = [];
 let loaded = false;
+let encounters: Record<string, number> | null = null;
 
 // ---- tiny daily mode + forgiving streak (daily.ts) ----------------------------
 const daily = loadDaily();
@@ -167,7 +168,8 @@ function renderCurrent(): void {
   // A YouTube card's clip and frame sit with the sentence from the start, like
   // the audio on the front of an Anki card.
   const media = mediaBlock(current);
-  mediaEl.replaceChildren(...(media ? [media] : []));
+  const again = seenAgainChip(encounters, current.lemma);
+  mediaEl.replaceChildren(...(again ? [again] : []), ...(media ? [media] : []));
   defsEl.replaceChildren(
     ...current.definitions.map((d) => el('li', { class: definitionClass(d) }, d.text)),
   );
@@ -232,5 +234,6 @@ for (const r of RATINGS) {
 }
 
 initDailyControls();
+fetchEncounters().then((e) => { encounters = e; if (loaded && !cardEl.hidden && defsEl.hidden) renderCurrent(); }).catch(() => {});
 loadActivity().catch(() => {});
 loadQueue();

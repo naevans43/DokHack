@@ -3,8 +3,8 @@ import { getBlob } from './blobstore';
 import { REVIEW_SITE_URL } from './config';
 import { definitionClass } from './konglish';
 import { ask } from './messaging';
-import { getAccount, getCards, getSettings, saveSettings } from './storage';
-import type { MinedCard } from './types';
+import { getAccount, getCards, getEncounters, getSettings, saveSettings } from './storage';
+import type { EncounterMap, MinedCard } from './types';
 
 // Saved-sentences page (also the extension's options page).
 
@@ -12,8 +12,11 @@ const list = document.getElementById('list')!;
 const empty = document.getElementById('empty')!;
 const count = document.getElementById('count')!;
 
+let encounters: EncounterMap = {};
+
 async function render(): Promise<void> {
-  const cards = await getCards();
+  const [cards, enc] = await Promise.all([getCards(), getEncounters()]);
+  encounters = enc;
   list.replaceChildren(...cards.map(item));
   empty.hidden = cards.length > 0;
   count.textContent = cards.length ? `${cards.length}개` : '';
@@ -43,6 +46,8 @@ function item(card: MinedCard): HTMLElement {
   a.textContent = card.title || new URL(card.url).hostname;
   meta.append(a);
   if (card.audioBlobId) meta.append(span('clip', '오디오'));
+  const seenAgain = encounters[card.lemma]?.n ?? 0;
+  if (seenAgain) meta.append(span('again', `다시 만남 ${seenAgain}번`));
 
   const acts = document.createElement('div');
   acts.className = 'acts';
@@ -386,7 +391,7 @@ async function initAccount(): Promise<void> {
 (document.getElementById('placementLink') as HTMLAnchorElement).href = `${REVIEW_SITE_URL}/placement`;
 document.getElementById('export')!.addEventListener('click', exportCsv);
 document.getElementById('exportAnki')!.addEventListener('click', () => { exportAnki().catch(() => { count.textContent = '내보내지 못했어요.'; }); });
-chrome.storage.onChanged.addListener((c) => c.cards && render());
+chrome.storage.onChanged.addListener((c) => (c.cards || c.encounters) && render());
 render();
 initAccount();
 

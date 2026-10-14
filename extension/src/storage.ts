@@ -1,4 +1,4 @@
-import type { AccountSession, MinedCard, Settings, WordStatus } from './types';
+import type { AccountSession, EncounterMap, MinedCard, Settings, WordStatus } from './types';
 
 // Everything lives in chrome.storage.local (with the unlimitedStorage
 // permission). Content scripts only READ from here; all writes go through
@@ -21,6 +21,11 @@ export async function getWords(): Promise<WordMap> {
 export async function getCards(): Promise<MinedCard[]> {
   const { cards } = await chrome.storage.local.get('cards');
   return (cards as MinedCard[]) ?? [];
+}
+
+export async function getEncounters(): Promise<EncounterMap> {
+  const { encounters } = await chrome.storage.local.get('encounters');
+  return (encounters as EncounterMap) ?? {};
 }
 
 export async function getSettings(): Promise<Settings> {
