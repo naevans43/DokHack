@@ -98,6 +98,7 @@ function enable(): void {
   highlighter.start();
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKey, true);
+  window.addEventListener('keydown', onHoverKey, true);
   document.addEventListener('pointerdown', onPointerDown, true);
   document.addEventListener('mousemove', onMouseMove, true);
   document.addEventListener('mouseleave', onMouseLeave);
@@ -124,6 +125,7 @@ function disable(): void {
   hoverToken = null;
   document.removeEventListener('click', onClick, true);
   document.removeEventListener('keydown', onKey, true);
+  window.removeEventListener('keydown', onHoverKey, true);
   document.removeEventListener('pointerdown', onPointerDown, true);
   document.removeEventListener('mousemove', onMouseMove, true);
   document.removeEventListener('mouseleave', onMouseLeave);
@@ -161,8 +163,14 @@ function reportEncounters(): void {
 let hoverRaf = 0;
 let hoverToken: { node: Text; start: number; end: number } | null = null;
 
+// Last pointer position over the page (null over our own card or off the page),
+// for onHoverKey's fresh hit-test.
+let pointer: { x: number; y: number } | null = null;
+
 function onMouseMove(e: MouseEvent): void {
-  if (editor?.isOpen || (popup?.isOpen && e.composedPath().includes(popup.host))) return;
+  const overCard = !!popup?.isOpen && e.composedPath().includes(popup.host);
+  pointer = overCard || editor?.isOpen ? null : { x: e.clientX, y: e.clientY };
+  if (editor?.isOpen || overCard) return;
   if (hoverRaf) return;
   const x = e.clientX;
   const y = e.clientY;
@@ -182,6 +190,7 @@ function onMouseMove(e: MouseEvent): void {
 }
 
 function onMouseLeave(): void {
+  pointer = null;
   hoverToken = null;
   highlighter?.setHover(null);
 }
@@ -248,6 +257,32 @@ function onPointerDown(e: PointerEvent): void {
   }
 }
 
+const STATUS_KEYS: Record<string, WordStatus> = { '1': 'unknown', '2': 'seen', '3': 'learning', '4': 'known' };
+
+/**
+ * Hover + 1-4 sets the hovered word's status without opening it -- the same
+ * keys as the open word card (1 모름, 2 봤어요, 3 학습 중, 4 알아요). On the
+ * window's capture phase, so it runs before a page's own key handlers
+ * (YouTube seeks with number keys), and it only claims the key when a word
+ * is actually under the pointer: anywhere else the key does what it always
+ * did. A hovered word wins over an open card's word.
+ */
+function onHoverKey(e: KeyboardEvent): void {
+  const status = STATUS_KEYS[e.key];
+  if (!status || !pointer || !highlighter || editor?.isOpen || e.repeat) return;
+  if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+  const t = e.target as HTMLElement | null;
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  // Hit-test now rather than trusting the last hover: YouTube's subtitle bar
+  // swaps its text on every line without the mouse moving.
+  const hit = wordAt(pointer.x, pointer.y);
+  if (!hit) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  setStatus(hit.token.lemma, status);
+  highlighter.flash(hit.range);
+}
+
 function onKey(e: KeyboardEvent): void {
   const t = e.target as HTMLElement;
   const inField = t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
@@ -268,9 +303,8 @@ function onKey(e: KeyboardEvent): void {
   if (inField || !popup?.isOpen || !popup.current) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-  const map: Record<string, WordStatus> = { '1': 'unknown', '2': 'seen', '3': 'learning', '4': 'known' };
   if (e.key === 'Escape') popup.close();
-  else if (map[e.key]) setStatus(popup.current.lemma, map[e.key]);
+  else if (STATUS_KEYS[e.key]) setStatus(popup.current.lemma, STATUS_KEYS[e.key]);
   else if (e.key.toLowerCase() === 's') openEditor();
   else return;
   e.preventDefault();

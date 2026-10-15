@@ -11,6 +11,8 @@
 /* Cues that a word is clickable, incl. "known" words which get no status
    color at all otherwise. Painted above the status colors (higher priority
    in highlighter.ts) so it stays visible on unknown/learning words too. */
+/* Feedback when a status is set by key while hovering (content.ts's onHoverKey). */
+::highlight(mine-flash) { background-color: rgba(29, 34, 48, 0.4); }
 ::highlight(mine-hover) { background-color: rgba(29, 34, 48, 0.14); }
 
 dokhack-popup { all: initial; }

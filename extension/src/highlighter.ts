@@ -72,7 +72,8 @@ export class Highlighter {
   private unitTokens = new WeakMap<object, Token[]>(); // unit -> tokens, in unit-flat coordinates
   private entries = new WeakMap<object, Entry[]>(); // unit -> its highlight ranges
   private byLemma = new Map<string, Set<Range>>();
-  private hl: Record<'unknown' | 'seen' | 'learning' | 'hover' | 'common' | 'rare', Highlight>;
+  private hl: Record<'unknown' | 'seen' | 'learning' | 'hover' | 'common' | 'rare' | 'flash', Highlight>;
+  private flashTimer: ReturnType<typeof setTimeout> | undefined;
   // Frequency badge (frequency.ts): an underline on a not-yet-studied word
   // that's very common or rare -- only while it's unknown or seen.
   private freqOf = new WeakMap<Range, 'common' | 'rare'>();
@@ -88,9 +89,10 @@ export class Highlighter {
   constructor(private words: WordMap, private ignoreRoot: () => Element | null) {
     this.hl = {
       unknown: new Highlight(), seen: new Highlight(), learning: new Highlight(), hover: new Highlight(),
-      common: new Highlight(), rare: new Highlight(),
+      common: new Highlight(), rare: new Highlight(), flash: new Highlight(),
     };
     this.hl.hover.priority = 1; // paints over the status color, not under it
+    this.hl.flash.priority = 2;
   }
 
   start(): void {
@@ -100,6 +102,7 @@ export class Highlighter {
     CSS.highlights.set('mine-hover', this.hl.hover);
     CSS.highlights.set('mine-common', this.hl.common);
     CSS.highlights.set('mine-rare', this.hl.rare);
+    CSS.highlights.set('mine-flash', this.hl.flash);
     this.enqueueSubtree(document.body);
     this.observer = new MutationObserver((muts) => this.onMutations(muts));
     this.observer.observe(document.body, {
@@ -119,6 +122,9 @@ export class Highlighter {
     CSS.highlights.delete('mine-hover');
     CSS.highlights.delete('mine-common');
     CSS.highlights.delete('mine-rare');
+    CSS.highlights.delete('mine-flash');
+    clearTimeout(this.flashTimer);
+    this.hl.flash.clear();
     this.hl.common.clear();
     this.hl.rare.clear();
     this.hl.unknown.clear();
@@ -242,6 +248,14 @@ export class Highlighter {
   setHover(range: Range | null): void {
     this.hl.hover.clear();
     if (range) this.hl.hover.add(range);
+  }
+
+  /** A brief flash over a word -- feedback for a status set by key while hovering (content.ts). */
+  flash(range: Range): void {
+    clearTimeout(this.flashTimer);
+    this.hl.flash.clear();
+    this.hl.flash.add(range);
+    this.flashTimer = setTimeout(() => this.hl.flash.clear(), 350);
   }
 
   /** Called when a status changes (in this tab or any other). */

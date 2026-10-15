@@ -78,7 +78,7 @@ async function main(): Promise<void> {
     } else if (status.active) {
       scanBtn.disabled = false;
       scanBtn.textContent = '스캔 끄기';
-      scanHint.textContent = '단어가 표시되고 있어요. 단어를 클릭해 뜻을 확인하세요.';
+      scanHint.textContent = '단어를 클릭하면 뜻이 나와요. 단어 위에 마우스를 올리고 1~4를 누르면 상태가 바로 바뀌어요.';
     } else {
       scanBtn.disabled = false;
       scanBtn.textContent = '이 페이지 스캔하기';
